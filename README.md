@@ -20,6 +20,24 @@ NexusTG слушает ваш аккаунт Telegram, выбирает толь
 
 ---
 
+## Скриншоты
+
+> Личные данные на скринах размыты, UI-каркас сохранён.
+
+| Inbox | Темы (дерево) |
+|---|---|
+| ![Inbox](docs/screenshots/inbox.png) | ![Topics](docs/screenshots/topics.png) |
+
+| Отчёты | Weekly-отчёт |
+|---|---|
+| ![Reports](docs/screenshots/reports.png) | ![Weekly](docs/screenshots/reports-weekly.png) |
+
+| Чаты (allow/block) | Поиск |
+|---|---|
+| ![Chats](docs/screenshots/chats.png) | ![Search](docs/screenshots/search.png) |
+
+---
+
 ## Стек
 
 - Python 3.12, `uv` для окружения
