@@ -1,0 +1,9 @@
+data/
+.env
+__pycache__/
+*.pyc
+.venv/
+backups/
+*.egg-info/
+.uv-cache/
+.claude/

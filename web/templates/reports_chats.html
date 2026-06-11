@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Чаты — отчёт{% endblock %}
+{% block body %}
+<a href="/reports" title="Назад к отчётам">← к отчётам</a>
+<h2>По чатам</h2>
+<table>
+  <thead><tr><th>Чат</th><th>Захвачено</th><th>Классифицировано</th><th>Ср. score</th><th>Последнее</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.title or r.chat_id }}</td>
+      <td>{{ r.captured }}</td>
+      <td>{{ r.classified }}</td>
+      <td>{% if r.avg_score %}{{ '%.2f'|format(r.avg_score) }}{% endif %}</td>
+      <td>{{ (r.last_msg or '')|local_dt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

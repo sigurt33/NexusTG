@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Отправители — отчёт{% endblock %}
+{% block body %}
+<a href="/reports" title="Назад к отчётам">← к отчётам</a>
+<h2>По отправителям</h2>
+<table>
+  <thead><tr><th>Имя</th><th>Сообщений</th><th>Ср. score</th><th>Последнее</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.sender_name }}</td>
+      <td>{{ r.captured }}</td>
+      <td>{{ '%.2f'|format(r.avg_score or 0) }}</td>
+      <td>{{ (r.last_msg or '')|local_dt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

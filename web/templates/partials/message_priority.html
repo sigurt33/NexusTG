@@ -1,0 +1,35 @@
+<div id="msg-priority">
+{% if priority %}
+<article>
+  <div class="kv">
+    <dt>Score</dt><dd><span class="score {{ priority.score|score_class }}">{{ '%.2f'|format(priority.score) }}</span></dd>
+    <dt>Срочность</dt><dd>
+      <form hx-post="/message/{{ target.id }}/priority" hx-target="#msg-priority" hx-swap="outerHTML" style="display:inline">
+        <input type="hidden" name="importance" value="{{ priority.importance }}">
+        <select name="urgency" onchange="this.form.requestSubmit()" title="Изменить срочность вручную — обновит и общий приоритет">
+          {% for v in [1,2,3,4,5] %}
+            <option value="{{ v }}" {% if v == priority.urgency %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </dd>
+    <dt>Важность</dt><dd>
+      <form hx-post="/message/{{ target.id }}/priority" hx-target="#msg-priority" hx-swap="outerHTML" style="display:inline">
+        <input type="hidden" name="urgency" value="{{ priority.urgency }}">
+        <select name="importance" onchange="this.form.requestSubmit()" title="Изменить важность вручную — обновит и общий приоритет">
+          {% for v in [1,2,3,4,5] %}
+            <option value="{{ v }}" {% if v == priority.importance %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </dd>
+    <dt>Темы</dt><dd>
+      {% for t in topics %}<span class="chip"><a href="/?topic={{ t.slug }}" title="Фильтр инбокса по этой теме">{{ t.label_ru }}</a></span>{% endfor %}
+    </dd>
+  </div>
+  <p class="rationale">{{ priority.rationale }}</p>
+</article>
+{% else %}
+<p><em>Ещё не классифицировано.</em></p>
+{% endif %}
+</div>

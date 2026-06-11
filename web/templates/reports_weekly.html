@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}За неделю — NexusTG{% endblock %}
+{% block body %}
+<a href="/reports" title="Назад к отчётам">← к отчётам</a>
+<h2>За последние 7 дней</h2>
+
+<h3>Активность по дням</h3>
+{% macro bar(value, max, label) %}
+  <div style="display:flex;align-items:center;gap:.5rem;margin:.2rem 0">
+    <span style="width:6em;">{{ label }}</span>
+    <div style="background:#e0e7ef;height:14px;width:300px;border-radius:3px;overflow:hidden">
+      <div style="background:#3a7bd5;height:100%;width:{{ (value/max*100)|round(1) }}%"></div>
+    </div>
+    <span>{{ value }}</span>
+  </div>
+{% endmacro %}
+{% for d in days %}{{ bar(d.n, max_day, d.d) }}{% endfor %}
+
+<div class="grid">
+  <section>
+    <h3>Топ-10 тем</h3>
+    <ol>{% for t in top_topics %}<li>{{ t.label_ru }} — {{ t.n }}</li>{% endfor %}</ol>
+  </section>
+  <section>
+    <h3>Топ-5 чатов</h3>
+    <ol>{% for c in top_chats %}<li>{{ c.chat_title or '—' }} — {{ c.n }}</li>{% endfor %}</ol>
+  </section>
+  <section>
+    <h3>Топ-5 отправителей</h3>
+    <ol>{% for s in top_senders %}<li>{{ s.sender_name or '—' }} — {{ s.n }}</li>{% endfor %}</ol>
+  </section>
+</div>
+{% endblock %}

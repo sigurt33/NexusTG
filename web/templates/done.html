@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Выполненные — NexusTG{% endblock %}
+{% block body %}
+<h2>✓ Выполненные</h2>
+<p style="opacity:.7;font-size:.9rem;">Последние {{ limit }} помеченных «Готово», новее сверху. Кликни строку чтобы открыть карточку и вернуть в инбокс при необходимости.</p>
+
+{% if not messages %}
+  <p><em>Пока ничего нет.</em></p>
+{% else %}
+<small>{{ messages|length }} задач</small>
+<div class="msg-list">
+{% for m in messages %}
+<div class="msg-row done-row" id="row-{{ m.id|replace(':','_') }}">
+  <div>
+    {% if m.is_dm %}<span class="badge dm" title="Личное сообщение">ЛС</span>{% endif %}
+    {% if m.is_mention %}<span class="badge mention" title="Меня упомянули">@</span>{% endif %}
+    {% if m.is_reply_to_me %}<span class="badge reply" title="Ответ на моё">↩</span>{% endif %}
+    <span class="badge" style="background:#16a34a;" title="Выполнено {{ m.done_at }}">✓</span>
+  </div>
+  <div>
+    <a class="msg-link" href="/message/{{ m.id }}" title="Открыть карточку — можно вернуть в инбокс">
+      <div class="meta">
+        <strong>{{ m.chat_title or m.chat_id }}</strong>
+        <span>· {{ m.sender_name or '—' }}</span>
+        {% for t in m.topics or [] %}
+          <span class="chip">{{ t.label_ru }}</span>
+        {% endfor %}
+      </div>
+      <div class="snippet">{{ m.text|snippet(220) }}</div>
+    </a>
+    <div class="actions">
+      <button type="button"
+              title="Вернуть задачу в инбокс — снова появится для работы"
+              hx-post="/actions/{{ m.id }}/unread"
+              hx-target="#row-{{ m.id|replace(':','_') }}" hx-swap="delete">↩ Вернуть в инбокс</button>
+    </div>
+  </div>
+  <div class="right">
+    {% if m.score and m.score > 0 %}
+      <div><span class="score {{ m.score|score_class }}">{{ '%.1f'|format(m.score) }}</span></div>
+    {% endif %}
+    <div title="Когда отмечено готово">{{ m.done_at|rel_ru }}</div>
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

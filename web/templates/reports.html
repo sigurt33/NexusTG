@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Отчёты — NexusTG{% endblock %}
+{% block body %}
+<h2>Отчёты</h2>
+<div class="grid">
+  <article>
+    <h3><a href="/reports/weekly" title="Сводка за последние 7 дней: активность, топ тем/чатов/отправителей">📊 За неделю</a></h3>
+    <p>Активность за 7 дней, топ-темы и чаты.</p>
+  </article>
+  <article>
+    <h3><a href="/reports/topics" title="Все темы с подсчётами за 7/30 дней и средним приоритетом">🏷 По темам</a></h3>
+    <p>Сортируемая таблица тем со счётчиками.</p>
+  </article>
+  <article>
+    <h3><a href="/reports/chats" title="Статистика по чатам: захвачено, классифицировано, средний score">💬 По чатам</a></h3>
+    <p>Активность по чатам.</p>
+  </article>
+  <article>
+    <h3><a href="/reports/senders" title="Активность по отправителям">👤 По отправителям</a></h3>
+    <p>Кто пишет чаще всех.</p>
+  </article>
+</div>
+
+<h3>CSV-экспорт</h3>
+<ul>
+  <li><a href="/export/messages.csv" title="Скачать CSV всех сообщений (UTF-8 BOM, разделитель ;)">messages.csv</a> — все сообщения</li>
+  <li><a href="/export/topics.csv" title="Скачать CSV всех тем">topics.csv</a> — список тем</li>
+  <li>Можно фильтровать: <code>/export/messages.csv?from=2026-01-01&amp;topic=slug&amp;min_score=3</code></li>
+</ul>
+{% endblock %}

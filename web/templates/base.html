@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<script>
+  // применяем сохранённую тему до первого render, чтобы не моргало
+  (function(){
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      var s = localStorage.getItem('scheme');
+      if (s) document.documentElement.setAttribute('data-scheme', s);
+    } catch(e) {}
+  })();
+</script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}NexusTG{% endblock %}</title>
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+  <link rel="stylesheet" href="/static/pico.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/shortcuts.js" defer></script>
+  <script src="/static/bg.js" defer></script>
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/" class="brand" title="NexusTG — на главную">
+      <video class="brand-logo" src="/static/logo.mp4" autoplay loop muted playsinline></video>
+      <strong>NexusTG</strong>
+    </a>
+    <a href="/"        class="{% if active=='inbox' %}active{% endif %}"    title="Главная очередь задач — отсортированы по приоритету">Инбокс</a>
+    <a href="/search"  class="{% if active=='search' %}active{% endif %}"   title="Полнотекстовый поиск по всем захваченным сообщениям">Поиск</a>
+    <a href="/topics"  class="{% if active=='topics' %}active{% endif %}"   title="Управление таксономией: переименование, скрытие, слияние, иерархия">Темы</a>
+    <a href="/done"    class="{% if active=='done' %}active{% endif %}"     title="Архив всех помеченных «Готово» — можно вернуть в инбокс">Выполненные</a>
+    <a href="/digest"  class="{% if active=='digest' %}active{% endif %}"   title="Сводка задач за вчерашний день">Дайджест</a>
+    <a href="/reports" class="{% if active=='reports' %}active{% endif %}"  title="Аналитика по неделям, темам, чатам, отправителям + CSV-экспорт">Отчёты</a>
+    <a href="/chats"   class="{% if active=='chats' %}active{% endif %}"    title="Список всех Telegram-чатов и переключатель обработки">Чаты</a>
+    <a href="/examples" class="{% if active=='examples' %}active{% endif %}" title="Сохранённые примеры классификации, подмешиваются в промт">Примеры</a>
+    <a href="/rules"    class="{% if active=='rules' %}active{% endif %}"    title="Алина-режим: правила свободным текстом, влияют на классификацию">Правила</a>
+    <a href="/templates" class="{% if active=='templates' %}active{% endif %}" title="Шаблоны быстрых ответов">Шаблоны</a>
+    <a href="/health"  class="{% if active=='health' %}active{% endif %}"   title="Состояние сервиса: лаг ingest, classified_at, расход токенов">Health</a>
+    <div class="scheme-picker" title="Выбрать цветовую схему страницы">
+      <button class="sw sw-pink"   data-scheme="pink"   type="button" title="Розовая схема"></button>
+      <button class="sw sw-green"  data-scheme="green"  type="button" title="Зелёная схема"></button>
+      <button class="sw sw-violet" data-scheme="violet" type="button" title="Сиреневая схема"></button>
+      <button class="sw sw-blue"   data-scheme="blue"   type="button" title="Синяя схема"></button>
+    </div>
+    {% if me and me.id %}
+    <div class="me-box" title="Профиль Telegram: {{ me.first_name }} {{ me.last_name }} (@{{ me.username or '—' }})">
+      {% if me.avatar_url %}<img class="me-avatar" src="{{ me.avatar_url }}" alt="me">{% endif %}
+      <span class="me-nick">{% if me.username %}@{{ me.username }}{% else %}{{ me.first_name }}{% endif %}</span>
+    </div>
+    {% endif %}
+    <button id="theme-toggle" class="theme-toggle" type="button"
+            title="Переключить ночную/дневную тему оформления"
+            onclick="(function(){var h=document.documentElement;var cur=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',cur);try{localStorage.setItem('theme',cur);}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=(cur==='dark'?'☀️':'🌙');})()">🌙</button>
+  </nav>
+  <script>
+    (function(){
+      var b = document.getElementById('theme-toggle');
+      if (b) b.textContent = (document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙');
+      document.querySelectorAll('.scheme-picker .sw').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var s = btn.getAttribute('data-scheme');
+          document.documentElement.setAttribute('data-scheme', s);
+          try{ localStorage.setItem('scheme', s); }catch(e){}
+        });
+      });
+    })();
+  </script>
+  <main class="container-fluid">
+    {% block body %}{% endblock %}
+  </main>
+</body>
+</html>

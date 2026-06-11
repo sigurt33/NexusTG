@@ -1,0 +1,39 @@
+<tr id="topic-{{ t.id }}">
+  <td><input type="checkbox" name="from_ids" value="{{ t.id }}" form="" title="Отметить для массового слияния"></td>
+  <td>{{ t.id }}</td>
+  <td><code>{{ t.slug }}</code></td>
+  <td>
+    <form hx-post="/topics/{{ t.id }}/rename" hx-target="#topic-{{ t.id }}" hx-swap="outerHTML" style="display:flex;gap:.3rem;margin:0;">
+      <input type="text" name="label_ru" value="{{ t.label_ru }}" style="margin:0;" title="Новое название темы">
+      <button type="submit" class="secondary outline" title="Переименовать тему — изменится только её label_ru">OK</button>
+    </form>
+    <a href="/topics/{{ t.id }}/messages" title="Открыть все сообщения этой темы со страничной навигацией">📑 сообщения</a>
+    {% if t.parent_label %}
+      <small class="chip" title="Родительская тема">родитель: {{ t.parent_label }}</small>
+    {% endif %}
+  </td>
+  <td>
+    <form hx-post="/topics/{{ t.id }}/set-parent" hx-target="#topic-{{ t.id }}" hx-swap="outerHTML" style="margin:0;display:flex;gap:.2rem">
+      <input type="number" name="parent_id" value="{{ t.parent_id or '' }}" placeholder="id" style="width:5em;margin:0" title="ID родительской темы (пусто = корень)">
+      <button type="submit" class="secondary outline" title="Установить родительскую тему для иерархии">→</button>
+    </form>
+  </td>
+  <td>{{ t.message_count }}</td>
+  <td>{{ t.created_at|local_dt }}</td>
+  <td>
+    {% if t.hidden %}
+      <button class="secondary outline"
+              title="Показать скрытую тему — она снова появится в фильтрах"
+              hx-post="/topics/{{ t.id }}/unhide"
+              hx-target="#topic-{{ t.id }}"
+              hx-swap="outerHTML">Вернуть</button>
+    {% else %}
+      <button class="secondary outline"
+              title="Скрыть тему из фильтров и UI — данные не теряются"
+              hx-post="/topics/{{ t.id }}/hide"
+              hx-target="#topic-{{ t.id }}"
+              hx-swap="outerHTML"
+              hx-confirm="Скрыть тему «{{ t.label_ru }}»?">Скрыть</button>
+    {% endif %}
+  </td>
+</tr>

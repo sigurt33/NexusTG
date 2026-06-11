@@ -1,0 +1,13 @@
+<div id="chats-table">
+  {% if sync_error %}<p style="color:#c00">Ошибка sync: {{ sync_error }}</p>{% endif %}
+  {% if sync_ok %}<p style="color:#080">Синхронизация выполнена.</p>{% endif %}
+  <table>
+    <thead><tr>
+      <th>ID</th><th>Название</th><th>Захвачено</th><th>Последнее</th>
+      <th>Архив</th><th>Обработка</th><th></th>
+    </tr></thead>
+    <tbody>
+      {% for c in chats %}{% include "partials/chat_row.html" %}{% endfor %}
+    </tbody>
+  </table>
+</div>

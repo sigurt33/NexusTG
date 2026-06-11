@@ -1,0 +1,63 @@
+<div class="msg-row" id="row-{{ m.id|replace(":","_") }}">
+  <div>
+    {% if m.is_dm %}<span class="badge dm" title="Личное сообщение">ЛС</span>{% endif %}
+    {% if m.is_mention %}<span class="badge mention" title="Меня упомянули">@</span>{% endif %}
+    {% if m.is_reply_to_me %}<span class="badge reply" title="Ответ на моё сообщение">↩</span>{% endif %}
+    {% if m.last_action == 'snoozed' and m.last_snooze_until %}
+      <span class="badge snoozed" title="Отложено до {{ m.last_snooze_until }}">💤</span>
+    {% endif %}
+  </div>
+  <div>
+    <a class="msg-link" href="/message/{{ m.id }}" title="Открыть карточку сообщения с контекстом и действиями">
+      <div class="meta">
+        <strong>{{ m.chat_title or m.chat_id }}</strong>
+        <span>· {{ m.sender_name or '—' }}</span>
+        {% for t in m.topics or [] %}
+          <span class="chip" title="Тема: {{ t.label_ru }} — кликните чип на странице сообщения для фильтра">{{ t.label_ru }}</span>
+        {% endfor %}
+      </div>
+      <div class="snippet">{{ m.text|snippet(220) }}</div>
+    </a>
+    <div class="actions">
+      <button type="button"
+              title="Пометить как выполненное — пропадёт из инбокса"
+              hx-post="/actions/{{ m.id }}/done"
+              hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">✓ Готово</button>
+      <details class="snooze-menu">
+        <summary title="Отложить — сообщение вернётся в инбокс позже с уведомлением">💤 Отложить</summary>
+        <div class="snooze-opts">
+          <button type="button" title="Спрятать на 1 час, потом вернётся в инбокс"
+                  hx-post="/actions/{{ m.id }}/snooze"
+                  hx-vals='{"preset":"1h"}'
+                  hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">1 час</button>
+          <button type="button" title="Отложить до завтра 10:00"
+                  hx-post="/actions/{{ m.id }}/snooze"
+                  hx-vals='{"preset":"tomorrow10"}'
+                  hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">Завтра 10:00</button>
+          <button type="button" title="Отложить до понедельника 10:00"
+                  hx-post="/actions/{{ m.id }}/snooze"
+                  hx-vals='{"preset":"monday10"}'
+                  hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">Понедельник 10:00</button>
+          <form class="custom-snooze"
+                hx-post="/actions/{{ m.id }}/snooze"
+                hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">
+            <input type="hidden" name="preset" value="custom">
+            <input type="datetime-local" name="custom_until" required title="Произвольная дата возврата">
+            <button type="submit" title="Отложить до выбранного момента">Своё</button>
+          </form>
+        </div>
+      </details>
+      <button type="button"
+              title="Заархивировать — больше не показывать в инбоксе"
+              hx-post="/actions/{{ m.id }}/archive"
+              hx-target="#row-{{ m.id|replace(":","_") }}" hx-swap="delete">📦 Архив</button>
+    </div>
+  </div>
+  <div class="right">
+    {% if m.score and m.score > 0 %}
+      <div><span class="score {{ m.score|score_class }}" title="Score = urgency*0.6 + importance*0.4">{{ '%.1f'|format(m.score) }}</span></div>
+      <div title="Срочность / Важность (1..5)">U{{ m.urgency }}/I{{ m.importance }}</div>
+    {% endif %}
+    <div>{{ m.date_utc|rel_ru }}</div>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Сообщения темы — {{ topic.label_ru }}{% endblock %}
+{% block body %}
+<a href="/topics" title="Назад к списку тем">← к темам</a>
+<h2>Тема: {{ topic.label_ru }} <small>({{ topic.message_count }})</small></h2>
+
+<form hx-post="/topics/{{ topic.id }}/assign-message" hx-target="body" style="display:flex;gap:.3rem;">
+  <input type="text" name="message_id" placeholder="chat_id:msg_id" required title="ID сообщения в формате chat_id:msg_id">
+  <button type="submit" title="Привязать существующее сообщение к этой теме">＋ Добавить сообщение</button>
+</form>
+
+<table>
+  <thead><tr><th>Дата</th><th>Чат</th><th>Текст</th><th>Score</th><th></th></tr></thead>
+  <tbody>
+  {% for m in messages %}
+    <tr id="tm-{{ m.id|replace(':','_') }}">
+      <td>{{ m.date_utc|local_dt }}</td>
+      <td>{{ m.chat_title or '—' }} · {{ m.sender_name or '—' }}</td>
+      <td><a href="/message/{{ m.id }}" title="Открыть сообщение целиком">{{ m.text|snippet(180) }}</a></td>
+      <td>{% if m.score %}<span class="score {{ m.score|score_class }}">{{ '%.1f'|format(m.score) }}</span>{% endif %}</td>
+      <td>
+        <button class="secondary outline"
+                title="Отвязать сообщение от этой темы (само сообщение остаётся в базе)"
+                hx-post="/topics/{{ topic.id }}/unassign/{{ m.id }}"
+                hx-target="#tm-{{ m.id|replace(':','_') }}"
+                hx-swap="outerHTML"
+                hx-confirm="Убрать тему «{{ topic.label_ru }}» с этого сообщения?">Убрать тему</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<nav>
+  {% if prev_offset is not none %}
+    <a href="/topics/{{ topic.id }}/messages?offset={{ prev_offset }}" title="Предыдущая страница">← назад</a>
+  {% endif %}
+  {% if next_offset %}
+    <a href="/topics/{{ topic.id }}/messages?offset={{ next_offset }}" title="Следующая страница">вперёд →</a>
+  {% endif %}
+</nav>
+{% endblock %}

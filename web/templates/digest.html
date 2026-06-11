@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Дайджест — NexusTG{% endblock %}
+{% block body %}
+<h2>Дайджест за {{ date }}</h2>
+<p><small>Топ-20 по приоритету, классифицированы вчера. Всего: {{ total }}.</small></p>
+{% if not groups %}
+  <p><em>За вчера ничего не классифицировано.</em></p>
+{% endif %}
+{% for label, items in groups.items() %}
+  <h3>{{ label }} <small>({{ items|length }})</small></h3>
+  {% for m in items %}
+    <div class="msg-row">
+      <div>
+        {% if m.is_dm %}<span class="badge dm">ЛС</span>{% endif %}
+        {% if m.is_mention %}<span class="badge mention">@</span>{% endif %}
+        {% if m.is_reply_to_me %}<span class="badge reply">↩</span>{% endif %}
+      </div>
+      <div>
+        <a class="msg-link" href="/message/{{ m.id }}">
+          <div class="meta"><strong>{{ m.chat_title }}</strong> · {{ m.sender_name }}</div>
+          <div class="snippet">{{ m.text|snippet(220) }}</div>
+          {% if m.rationale %}<div class="rationale">{{ m.rationale }}</div>{% endif %}
+        </a>
+      </div>
+      <div class="right">
+        <div><span class="score {{ m.score|score_class }}">{{ '%.1f'|format(m.score) }}</span></div>
+        <div>U{{ m.urgency }}/I{{ m.importance }}</div>
+        <div>{{ m.date_utc|rel_ru }}</div>
+      </div>
+    </div>
+  {% endfor %}
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Примеры — NexusTG{% endblock %}
+{% block body %}
+<h2>Сохранённые примеры классификации</h2>
+<p>Эти оценки подмешиваются в системный промт классификатора (последние 5).</p>
+<table>
+  <thead><tr><th>Дата</th><th>Сообщение</th><th>U/I</th><th>Темы</th><th>Заметка</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr id="ex-{{ r.message_id|replace(':','_') }}">
+      <td>{{ r.created_at|local_dt }}</td>
+      <td><a href="/message/{{ r.message_id }}" title="Открыть сообщение">{{ (r.text or '')|snippet(120) }}</a>
+        <br><small>{{ r.chat_title or '—' }} · {{ r.sender_name or '—' }}</small></td>
+      <td>U{{ r.urgency }}/I{{ r.importance }}</td>
+      <td>{% for t in r.topics_parsed %}<span class="chip">{{ t.label_ru }}</span>{% endfor %}</td>
+      <td>
+        <form hx-post="/examples/{{ r.message_id }}/note" hx-swap="none" style="display:flex;gap:.2rem;margin:0">
+          <input type="text" name="note" value="{{ r.note or '' }}" title="Свободная заметка к примеру">
+          <button type="submit" class="secondary outline" title="Сохранить заметку">OK</button>
+        </form>
+      </td>
+      <td>
+        <button class="secondary outline"
+                title="Удалить пример из обучающего набора"
+                hx-post="/examples/{{ r.message_id }}/delete"
+                hx-target="#ex-{{ r.message_id|replace(':','_') }}"
+                hx-swap="outerHTML"
+                hx-confirm="Удалить этот пример?">✗</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

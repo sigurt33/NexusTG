@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Поиск — NexusTG{% endblock %}
+{% block body %}
+<h2>Поиск</h2>
+<input type="search" name="q" placeholder="Слова через пробел…" value="{{ q }}"
+       hx-get="/search" hx-target="#search-results"
+       hx-trigger="input changed delay:400ms, search"
+       autofocus>
+<div id="search-results">
+  {% include "partials/search_results.html" %}
+</div>
+{% endblock %}

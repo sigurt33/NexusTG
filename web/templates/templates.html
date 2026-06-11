@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Шаблоны — NexusTG{% endblock %}
+{% block body %}
+<h2>📋 Шаблоны быстрых ответов</h2>
+<p style="opacity:.7;font-size:.9rem;max-width:60ch;">
+  Заготовки для быстрых ответов на сообщения. Доступны из карточки сообщения через выпадающее меню рядом с кнопкой «Быстрый ответ».
+</p>
+
+<form hx-post="/templates/add" hx-target="#templates-list" hx-swap="outerHTML" style="margin-bottom:1.2rem;">
+  <input type="text" name="title" placeholder="Короткое название (видно в меню)" required title="Название шаблона — отображается в выпадающем списке">
+  <textarea name="text" rows="3" placeholder="Текст ответа" required title="Текст ответа — подставится в поле быстрого ответа"></textarea>
+  <button type="submit" title="Добавить шаблон в список">➕ Добавить шаблон</button>
+</form>
+
+{% include "partials/templates_list.html" %}
+{% endblock %}

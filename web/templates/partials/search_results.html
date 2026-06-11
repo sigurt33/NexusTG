@@ -1,0 +1,28 @@
+{% if not q %}
+  <p><em>Введите запрос.</em></p>
+{% elif not results %}
+  <p><em>Ничего не найдено.</em></p>
+{% else %}
+  <small>Найдено: {{ results|length }}</small>
+  {% for r in results %}
+  <div class="msg-row">
+    <div>
+      {% if r.is_dm %}<span class="badge dm">ЛС</span>{% endif %}
+      {% if r.is_mention %}<span class="badge mention">@</span>{% endif %}
+      {% if r.is_reply_to_me %}<span class="badge reply">↩</span>{% endif %}
+    </div>
+    <div>
+      <a class="msg-link" href="/message/{{ r.id }}">
+        <div class="meta"><strong>{{ r.chat_title or r.chat_id }}</strong> · {{ r.sender_name or '—' }}</div>
+        <div class="snippet">{{ r.snip|safe }}</div>
+      </a>
+    </div>
+    <div class="right">
+      {% if r.score and r.score > 0 %}
+        <div><span class="score {{ r.score|score_class }}">{{ '%.1f'|format(r.score) }}</span></div>
+      {% endif %}
+      <div>{{ r.date_utc|rel_ru }}</div>
+    </div>
+  </div>
+  {% endfor %}
+{% endif %}

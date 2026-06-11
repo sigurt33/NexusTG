@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Health — NexusTG{% endblock %}
+{% block body %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+  <img src="/static/logo.jpg" alt="NexusTG" style="width:64px;height:64px;border-radius:.5rem;object-fit:cover;">
+  <h2 style="margin:0;">Состояние NexusTG</h2>
+</div>
+<dl class="kv">
+  <dt>Всего сообщений (с контекстом)</dt><dd>{{ total_messages }}</dd>
+  <dt>Захвачено (инбокс-кандидаты)</dt><dd>{{ captured }}</dd>
+  <dt>Классифицировано</dt><dd>{{ classified }} ({{ '%.1f'|format(100*classified/captured if captured else 0) }}%)</dd>
+  <dt>Последняя классификация</dt><dd>{{ last_classified|local_dt }} <small>({{ last_classified|rel_ru }})</small></dd>
+  <dt>Тем (видимых)</dt><dd>{{ topics_n }}</dd>
+  <dt>Сегодня токенов (prompt / completion)</dt><dd>{{ usage.prompt_tokens }} / {{ usage.completion_tokens }}</dd>
+  <dt>Сегодня стоимость</dt><dd>${{ '%.4f'|format(usage.cost_usd) }}</dd>
+  <dt>Backfill (чатов готово / всего)</dt><dd>{{ backfill.done or 0 }} / {{ backfill.chats or 0 }}</dd>
+</dl>
+{% endblock %}

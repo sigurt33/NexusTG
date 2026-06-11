@@ -1,0 +1,35 @@
+<div id="rules-list">
+  {% if not rules %}
+    <p style="opacity:.6;">Правил пока нет — добавь первое выше.</p>
+  {% else %}
+    {% for r in rules %}
+    <div class="rule-row {% if not r.active %}rule-inactive{% endif %}" id="rule-{{ r.id }}">
+      <div class="rule-meta">
+        <span class="rule-badge {% if r.active %}on{% else %}off{% endif %}"
+              title="{% if r.active %}Активно — правило применяется к новым классификациям{% else %}Выключено — правило не подмешивается в промт{% endif %}">
+          {% if r.active %}● ВКЛ{% else %}○ ВЫКЛ{% endif %}
+        </span>
+        <small style="opacity:.6;">#{{ r.id }} · создано {{ r.created_at }}{% if r.updated_at != r.created_at %} · изменено {{ r.updated_at }}{% endif %}</small>
+      </div>
+      <form hx-post="/rules/{{ r.id }}/edit" hx-target="#rules-list" hx-swap="outerHTML" class="rule-edit">
+        <textarea name="rule_text" rows="2" required
+                  title="Изменить текст правила — сохраняется по кнопке">{{ r.rule_text }}</textarea>
+        <div class="rule-actions">
+          <button type="submit" title="Сохранить изменения текста правила">💾 Сохранить</button>
+          <button type="button"
+                  hx-post="/rules/{{ r.id }}/toggle"
+                  hx-target="#rules-list" hx-swap="outerHTML"
+                  title="{% if r.active %}Выключить — правило перестанет влиять на классификацию{% else %}Включить — правило снова начнёт работать{% endif %}">
+            {% if r.active %}🚫 Выключить{% else %}✅ Включить{% endif %}
+          </button>
+          <button type="button"
+                  hx-post="/rules/{{ r.id }}/delete"
+                  hx-target="#rules-list" hx-swap="outerHTML"
+                  hx-confirm="Удалить это правило без возможности восстановить?"
+                  title="Удалить правило навсегда">🗑️ Удалить</button>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>

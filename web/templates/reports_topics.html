@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Темы — отчёт{% endblock %}
+{% block body %}
+<a href="/reports" title="Назад к отчётам">← к отчётам</a>
+<h2>По темам</h2>
+<table>
+  <thead><tr>
+    <th><a href="?sort=label_ru" title="Сортировать по названию">Тема</a></th>
+    <th><a href="?sort=count_total" title="Сортировать по общему числу сообщений">Всего</a></th>
+    <th><a href="?sort=count_7d" title="Сортировать по числу за 7 дней">7д</a></th>
+    <th><a href="?sort=count_30d" title="Сортировать по числу за 30 дней">30д</a></th>
+    <th><a href="?sort=avg_score" title="Сортировать по среднему приоритету">Ср. score</a></th>
+    <th><a href="?sort=last_seen" title="Сортировать по последней активности">Последнее</a></th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="/topics/{{ r.id }}/messages" title="Открыть сообщения темы">{{ r.label_ru }}</a></td>
+      <td>{{ r.count_total }}</td>
+      <td>{{ r.count_7d }}</td>
+      <td>{{ r.count_30d }}</td>
+      <td>{% if r.avg_score %}{{ '%.2f'|format(r.avg_score) }}{% endif %}</td>
+      <td>{{ (r.last_seen or '')|local_dt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

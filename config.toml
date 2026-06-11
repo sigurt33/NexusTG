@@ -1,0 +1,14 @@
+timezone = "Europe/Minsk"
+active_hours_start = "10:00"
+active_hours_end = "18:30"
+backfill_days = 30
+context_window = 5
+notify_windows_toast = true
+notify_tg_self = true
+ui_lang = "ru"
+grok_model = "gemini-2.5-flash"
+grok_daily_token_budget = 20000000
+llm_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+llm_input_usd_per_m = 0.075
+llm_output_usd_per_m = 0.30
+notify_tg_bot = false

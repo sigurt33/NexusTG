@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Сообщение — NexusTG{% endblock %}
+{% block body %}
+<a href="/" title="Вернуться к инбоксу">← к инбоксу</a>
+<h3>{{ target.chat_title or target.chat_id }} · {{ target.sender_name or '—' }}</h3>
+<p class="meta">
+  {% if target.is_dm %}<span class="badge dm" title="Личное сообщение">ЛС</span>{% endif %}
+  {% if target.is_mention %}<span class="badge mention" title="Меня упомянули">@</span>{% endif %}
+  {% if target.is_reply_to_me %}<span class="badge reply" title="Ответ на моё сообщение">↩</span>{% endif %}
+  <span>{{ target.date_utc|local_dt }}</span>
+  <a href="{{ tg_link }}" title="Открыть это сообщение в Telegram-приложении">🌐 Открыть в Telegram</a>
+  <button type="button" id="qreply-toggle" title="Открыть поле быстрого ответа — ответ отправится в Telegram"
+          onclick="document.getElementById('qreply-box').classList.toggle('open');document.getElementById('qreply-text').focus();">💬 Быстрый ответ</button>
+</p>
+
+<div id="qreply-box" class="qreply">
+  <div class="qreply-tplbar">
+    <details class="snooze-menu">
+      <summary title="Вставить готовый текст из шаблона">📋 Шаблоны</summary>
+      <div class="snooze-opts" id="tpl-menu">Загрузка...</div>
+    </details>
+    <a href="/templates" title="Управлять шаблонами — создавать, редактировать, удалять">✏️ Настроить шаблоны</a>
+  </div>
+  <form id="qreply-form" onsubmit="return sendQuickReply(event, '{{ target.id }}');">
+    <textarea id="qreply-text" rows="3" placeholder="Текст ответа..." required title="Что ответить в Telegram"></textarea>
+    <div class="actions">
+      <button type="submit" title="Отправить ответ в Telegram как reply на это сообщение">📤 Отправить</button>
+      <button type="button" onclick="document.getElementById('qreply-box').classList.remove('open');" title="Закрыть поле без отправки">Отмена</button>
+      <span id="qreply-status" style="font-size:.85rem;opacity:.75;"></span>
+    </div>
+  </form>
+</div>
+
+<script>
+(async function loadTemplates(){
+  try{
+    const r = await fetch('/api/templates'); const list = await r.json();
+    const menu = document.getElementById('tpl-menu');
+    if (!list.length){ menu.textContent = 'Нет шаблонов — добавь в разделе Шаблоны.'; return; }
+    menu.innerHTML = '';
+    list.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t.title; b.title = t.text.slice(0,120);
+      b.onclick = () => {
+        const ta = document.getElementById('qreply-text');
+        ta.value = t.text; ta.focus();
+        document.querySelector('#qreply-box .snooze-menu').removeAttribute('open');
+      };
+      menu.appendChild(b);
+    });
+  }catch(e){ document.getElementById('tpl-menu').textContent = 'Ошибка загрузки шаблонов.'; }
+})();
+async function sendQuickReply(e, mid){
+  e.preventDefault();
+  const ta = document.getElementById('qreply-text');
+  const st = document.getElementById('qreply-status');
+  const txt = ta.value.trim(); if (!txt) return false;
+  st.textContent = 'Отправляем...';
+  try{
+    const fd = new FormData(); fd.append('text', txt);
+    const r = await fetch('/message/' + encodeURIComponent(mid) + '/reply', {method:'POST', body: fd});
+    if (!r.ok){ st.textContent = '⚠ ошибка ' + r.status; return false; }
+    const d = await r.json();
+    st.textContent = '✓ ' + (d.message || 'отправлено');
+    ta.value = '';
+    setTimeout(() => { document.getElementById('qreply-box').classList.remove('open'); st.textContent=''; }, 2500);
+  }catch(err){ st.textContent = '⚠ ' + err; }
+  return false;
+}
+</script>
+<p class="meta" style="display:none;"><!-- placeholder to preserve template structure -->
+  {% if is_example %}<span class="badge" title="Это сообщение сохранено как обучающий пример" style="background:#fc6">⭐ Эта оценка — пример для обучения</span>{% endif %}
+</p>
+
+<div class="actions" id="msg-actions">
+  <button type="button"
+          title="Пометить как выполненное — пропадёт из инбокса"
+          hx-post="/actions/{{ target.id }}/done"
+          hx-target="#msg-actions" hx-swap="outerHTML">✓ Готово</button>
+  <details class="snooze-menu">
+    <summary title="Отложить сообщение — оно вернётся в инбокс позже">💤 Отложить</summary>
+    <div class="snooze-opts">
+      <button type="button" title="Спрятать на 1 час" hx-post="/actions/{{ target.id }}/snooze"
+              hx-vals='{"preset":"1h"}' hx-target="#msg-actions" hx-swap="outerHTML">1 час</button>
+      <button type="button" title="Отложить до завтра 10:00" hx-post="/actions/{{ target.id }}/snooze"
+              hx-vals='{"preset":"tomorrow10"}' hx-target="#msg-actions" hx-swap="outerHTML">Завтра 10:00</button>
+      <button type="button" title="Отложить до понедельника 10:00" hx-post="/actions/{{ target.id }}/snooze"
+              hx-vals='{"preset":"monday10"}' hx-target="#msg-actions" hx-swap="outerHTML">Понедельник 10:00</button>
+      <form hx-post="/actions/{{ target.id }}/snooze"
+            hx-target="#msg-actions" hx-swap="outerHTML">
+        <input type="hidden" name="preset" value="custom">
+        <input type="datetime-local" name="custom_until" required title="Произвольная дата возврата">
+        <button type="submit" title="Отложить до выбранной даты">Своё</button>
+      </form>
+    </div>
+  </details>
+  <button type="button"
+          title="Заархивировать — больше не показывать в инбоксе"
+          hx-post="/actions/{{ target.id }}/archive"
+          hx-target="#msg-actions" hx-swap="outerHTML">📦 Архив</button>
+  <button type="button"
+          title="Вернуть в инбокс (снять done/snooze/archive)"
+          hx-post="/actions/{{ target.id }}/unread"
+          hx-target="#msg-actions" hx-swap="outerHTML">↺ Вернуть в инбокс</button>
+  <button type="button"
+          title="Стереть текущие темы/приоритет и заново прогнать через LLM"
+          hx-post="/message/{{ target.id }}/reclassify"
+          hx-target="body" hx-swap="outerHTML"
+          hx-confirm="Переклассифицировать это сообщение?">🔁 Переклассифицировать</button>
+  <button type="button"
+          title="Использовать этот результат как образец для будущих классификаций"
+          hx-post="/message/{{ target.id }}/save-example"
+          hx-target="body" hx-swap="outerHTML">⭐ Сохранить как пример</button>
+</div>
+
+<div id="msg-priority">
+  {% include "partials/message_priority.html" %}
+</div>
+
+<h4>Контекст</h4>
+<ul class="ctx-list">
+  {% for c in context %}
+  <li class="{% if c.position==0 %}target{% endif %}">
+    <div class="who">[{{ c.position }}] {{ c.sender_name or '—' }} · {{ c.date_utc|local_dt }}</div>
+    <div>{{ c.text or '' }}</div>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

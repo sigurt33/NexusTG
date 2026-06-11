@@ -1,0 +1,17 @@
+<tr id="chat-{{ c.chat_id }}">
+  <td><code>{{ c.chat_id }}</code></td>
+  <td>{{ c.title or '—' }}</td>
+  <td>{{ c.captured }}</td>
+  <td>{{ (c.last_msg or '')|local_dt }}</td>
+  <td>{% if c.archived %}📦{% else %}—{% endif %}</td>
+  <td>{% if c.processing %}<span style="color:#080" title="Сообщения из этого чата попадают в инбокс">✓ вкл</span>{% else %}<span style="color:#888" title="Сообщения из этого чата игнорируются">✗ выкл</span>{% endif %}</td>
+  <td>
+    <button class="secondary outline"
+            title="{% if c.processing %}Выключить обработку: новые сообщения игнорируются, классификатор пропускает чат{% else %}Включить обработку: сообщения снова попадают в инбокс{% endif %}"
+            hx-post="/chats/{{ c.chat_id }}/toggle"
+            hx-target="#chat-{{ c.chat_id }}"
+            hx-swap="outerHTML">
+      {% if c.processing %}Выключить{% else %}Включить{% endif %}
+    </button>
+  </td>
+</tr>

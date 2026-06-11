@@ -1,0 +1,14 @@
+<div id="topics-table">
+<table>
+  <thead><tr>
+    <th title="Отметить для массовых операций">✓</th>
+    <th>ID</th><th>Slug</th><th>Название</th><th>Родитель</th>
+    <th>Сообщений</th><th>Создана</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for t in topics %}
+    {% include "partials/topic_row.html" %}
+  {% endfor %}
+  </tbody>
+</table>
+</div>

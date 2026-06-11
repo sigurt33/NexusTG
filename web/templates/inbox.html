@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Инбокс — NexusTG{% endblock %}
+{% block body %}
+<div class="inbox-head">
+  <h2>Инбокс</h2>
+  <details id="kbd-help" class="kbd-help" title="Клавиатурные шорткаты (нажми ? чтобы открыть/закрыть)">
+    <summary>⌨️ Шорткаты</summary>
+    <table class="kbd-table">
+      <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>следующее / предыдущее сообщение</td></tr>
+      <tr><td><kbd>g</kbd> / <kbd>G</kbd></td><td>в начало / в конец</td></tr>
+      <tr><td><kbd>e</kbd></td><td>пометить «Готово»</td></tr>
+      <tr><td><kbd>s</kbd></td><td>отложить на 1 час</td></tr>
+      <tr><td><kbd>a</kbd></td><td>в архив</td></tr>
+      <tr><td><kbd>o</kbd></td><td>открыть карточку</td></tr>
+      <tr><td><kbd>t</kbd></td><td>открыть карточку в новой вкладке</td></tr>
+      <tr><td><kbd>/</kbd></td><td>фокус на поиск</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>выйти из поля ввода</td></tr>
+      <tr><td><kbd>?</kbd></td><td>открыть/закрыть эту подсказку</td></tr>
+    </table>
+  </details>
+</div>
+
+<form class="filters"
+      hx-get="/" hx-target="#message-list" hx-trigger="change, input changed delay:400ms from:#q"
+      hx-push-url="true">
+  <select name="source">
+    <option value="" {% if not source %}selected{% endif %}>Все источники</option>
+    <option value="dm"      {% if source=='dm' %}selected{% endif %}>ЛС</option>
+    <option value="mention" {% if source=='mention' %}selected{% endif %}>Упоминания</option>
+    <option value="reply"   {% if source=='reply' %}selected{% endif %}>Ответы</option>
+  </select>
+
+  <select name="chat">
+    <option value="">Все чаты</option>
+    {% for c in chats %}
+    <option value="{{ c.chat_id }}" {% if chat==c.chat_id|string %}selected{% endif %}>
+      {{ c.chat_title or c.chat_id }} ({{ c.n }})
+    </option>
+    {% endfor %}
+  </select>
+
+  <select name="topic">
+    <option value="">Все темы</option>
+    {% for t in topics %}
+    <option value="{{ t.slug }}" {% if topic==t.slug %}selected{% endif %}>
+      {{ t.label_ru }} ({{ t.message_count }})
+    </option>
+    {% endfor %}
+  </select>
+
+  <input type="text" id="q" name="q" placeholder="Текст содержит…" value="{{ q }}">
+
+  <label>
+    <input type="checkbox" name="show_unclassified" value="1"
+           {% if show_unclassified %}checked{% endif %}>
+    Показать неклассифицированные
+  </label>
+</form>
+
+<div id="message-list">
+  {% include "partials/message_list.html" %}
+</div>
+{% endblock %}

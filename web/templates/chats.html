@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Чаты — NexusTG{% endblock %}
+{% block body %}
+<h2>Чаты</h2>
+<p>
+  <a href="/chats?view=active" title="Показать только обрабатываемые чаты">Активные</a> ·
+  <a href="/chats?view=archived" title="Показать только чаты в архиве или с выключенной обработкой">Архив/выключённые</a> ·
+  <a href="/chats?view=all" title="Показать все чаты без фильтра">Все</a>
+  &nbsp;|&nbsp;
+  <button type="button"
+          title="Перечитать список чатов из Telegram и обновить флаги архива"
+          hx-post="/chats/sync"
+          hx-target="#chats-table"
+          hx-swap="outerHTML">🔄 Синхронизировать с Telegram</button>
+</p>
+<div id="chats-table">
+  {% include "partials/chats_table.html" %}
+</div>
+{% endblock %}

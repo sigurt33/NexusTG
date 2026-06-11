@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Темы — NexusTG{% endblock %}
+{% block body %}
+<h2>Темы</h2>
+<p>
+  <a href="/topics?view=list" title="Плоский список тем с возможностью переименовать, скрыть и слить">Список</a> ·
+  <a href="/topics?view=tree" title="Иерархическое дерево тем (родитель→дети)">Иерархия</a> ·
+  <a href="/topics?view=all" title="Показать скрытые темы тоже">Включая скрытые</a>
+</p>
+
+<details>
+  <summary>Слить пару тем</summary>
+  <form hx-post="/topics/merge" hx-target="#topics-table" hx-swap="outerHTML">
+    <div class="grid">
+      <label>Из (id)<input type="number" name="from_id" required title="ID темы-источника — она будет удалена"></label>
+      <label>В (id)<input type="number" name="to_id" required title="ID темы-получателя — все сообщения переедут сюда"></label>
+      <button type="submit" title="Слить тему-источник в тему-получатель и удалить источник">Слить</button>
+    </div>
+  </form>
+</details>
+
+{% if view == 'tree' and tree is not none %}
+  {% macro render_node(n) %}
+    <li>
+      <strong><a href="/topics/{{ n.id }}/messages" title="Открыть список сообщений этой темы">{{ n.label_ru }}</a></strong>
+      <small>({{ n.message_count }})</small>
+      {% if n.children %}
+        <ul>{% for ch in n.children %}{{ render_node(ch) }}{% endfor %}</ul>
+      {% endif %}
+    </li>
+  {% endmacro %}
+  <ul>
+    {% for root in tree %}{{ render_node(root) }}{% endfor %}
+  </ul>
+{% else %}
+  <form hx-post="/topics/merge-bulk" hx-target="#topics-table" hx-swap="outerHTML">
+    <div id="topics-table">
+      {% include "partials/topics_table.html" %}
+    </div>
+    <fieldset>
+      <label>Слить выделенные в тему (id)
+        <input type="number" name="to_id" required title="Куда перенести выделенные темы">
+      </label>
+      <button type="submit" title="Перенести все отмеченные темы в указанную и удалить источники">Слить выделенные</button>
+    </fieldset>
+  </form>
+{% endif %}
+{% endblock %}

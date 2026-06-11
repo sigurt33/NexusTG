@@ -1,0 +1,10 @@
+{% if not messages %}
+  <p><em>Сообщений нет.</em></p>
+{% else %}
+  <small><span id="msg-count">{{ messages|length }}</span> сообщений</small>
+  <div class="msg-list">
+  {% for m in messages %}
+    {% include "partials/message_row.html" %}
+  {% endfor %}
+  </div>
+{% endif %}
