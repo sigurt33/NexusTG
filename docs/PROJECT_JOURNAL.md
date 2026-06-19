@@ -85,6 +85,7 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-11 | Журнал проекта создан (`docs/PROJECT_JOURNAL.md`) | этот файл |
 | 2026-06-12 | **Русификация задачника**: добавлены `STATUS_BTN_LABELS` и `PRIORITY_LABELS` в `web/routes/tasks.py`; все статус-кнопки в `partials/task_row.html` теперь подписаны по-русски («→ В процессе», «→ Готово», «→ Жду», «→ Отменено», «→ К работе»); кнопки «💬 К сообщению в Telegram», «🌐 В дашборде», «🗑 Удалить»; форма создания: ⬇ низкий / · обычный / ⚡ высокий | `web/routes/tasks.py`, `web/templates/tasks.html`, `web/templates/partials/task_row.html` |
 | 2026-06-12 | **Закреп инструкции в Telegram-боте**: одноразовый скрипт `bot/pin_help.py` снимает старые закрепы (`UnpinAllMessagesRequest`), шлёт краткую инструкцию (команды + кнопки), закрепляет её (`pin_message`) и обновляет список команд бота через `SetBotCommandsRequest` (видим в меню `/`) | `bot/pin_help.py` |
+| 2026-06-19 | **Пуш изменений 11–12 июня в `sigurt33/NexusTG`**: 3 коммита — `feat: add task manager`, `feat(bot): add pin_help script`, `docs: add project journal and update nexustg-dev skill`. `REVIEW.md` оставлен локально (личный отзыв, не для публичного репо) | `git push` (`6235242..dead2da`) |
 
 ---
 
@@ -146,7 +147,7 @@ uv run python -m bot.pin_help
 - [ ] CSV-экспорт задач (паттерн копировать из `/export/messages.csv`)
 - [ ] UI-форма редактирования задачи (сейчас только статус и удаление через кнопки; для edit полей нужен модал)
 - [ ] Lite-режим (`--lite` флаг) — см. `skills/nexustg-lite/SKILL.md`, концепт описан, реализации нет
-- [ ] Коммит и пуш изменений 11–12 июня в `sigurt33/NexusTG` (всё локально, не запушено)
+- [x] ~~Коммит и пуш изменений 11–12 июня в `sigurt33/NexusTG`~~ — сделано 2026-06-19 (`6235242..dead2da`)
 
 ---
 
