@@ -99,10 +99,56 @@ Get-ChildItem data\logs\ | Sort LastWriteTime -Desc | Select -First 3
 
 Если в скринах/доках видны имена/тексты переписки — **остановиться и спросить пользователя**, а не пушить.
 
-## 7. Что НЕ делать
+## 7. Cookbook (типовые правки)
+
+> Подробности и полный inventory — в `docs/PROJECT_JOURNAL.md` §11–12.
+
+### + Новая веб-страница
+1. `web/routes/<x>.py` с `router = APIRouter()` (паттерн: `tasks.py`)
+2. `web/templates/<x>.html` extends `base.html` + partials в `partials/`
+3. Зарегистрировать в `web/app.py:create_app()` (импорт + `include_router`)
+4. Добавить вкладку в `web/templates/base.html` с `{% if active=='<x>' %}active{% endif %}`
+
+### + Новая колонка / таблица
+1. `app/db.py:ensure_columns()` — `_table_columns(...)` + `ALTER ADD COLUMN`, либо `CREATE TABLE IF NOT EXISTS`
+2. Зеркально в `app/schema.sql` (для свежих установок)
+3. Перезапуск `run` или `web` — `init_db()` применит
+
+### + Команда в боте
+1. `bot/main.py:register_handlers` — `@bot.on(events.NewMessage(pattern=r"^/x"))` + `if not _allowed(event): return`
+2. Inline-кнопки: `Button.inline("...", b"prefix:payload")`, ветка в `_cb` под `action == "prefix"`
+3. Обновить `bot/pin_help.py` (`HELP_TEXT`, `COMMANDS`) и запустить `uv run python -m bot.pin_help` (с `PYTHONIOENCODING=utf-8`)
+
+### Сменить LLM-провайдера
+`config.toml`: `llm_base_url`, `grok_model`, `llm_input_usd_per_m`, `llm_output_usd_per_m`. Ключ — в `.env:XAI_API_KEY` (имя историческое, не переименовывать). Формат — OpenAI-совместимый.
+
+### Изменить промт классификатора
+`classifier/prompts.py:build_system_prompt` — сборка финального промта. Динамика: `fetch_top_topics`, `fetch_active_rules`, последние 5 `classification_examples`. Проверка — кнопка «🔁 Переклассифицировать» на `/message/{id}` или POST `/message/{id}/reclassify`.
+
+### HTMX-кнопка на карточке сообщения
+В `web/templates/message.html` (блок `#msg-actions`) или `partials/message_row.html`:
+```html
+<button hx-post="/route/{{ target.id }}" hx-target="#msg-actions" hx-swap="outerHTML"
+        title="Что делает">🎯 Текст</button>
+```
+Эндпоинт возвращает HTML-фрагмент либо `Response(204)` с `HX-Redirect`.
+
+---
+
+## 8. Что НЕ делать
 
 - Не коммитить `data/tg.session` — это полный доступ к Telegram
 - Не запускать `app.cli run` параллельно с уже работающим инстансом (отзовёт сессию)
 - Не редактировать `uv.lock` руками
 - Не добавлять зависимости без обновления `pyproject.toml`
 - Не использовать `git add -A` без предварительного `git status`
+
+---
+
+## 9. С чего начать в новой сессии
+
+1. Прочитать `docs/PROJECT_JOURNAL.md` целиком — там карта проекта, последние изменения, грабли, TODO
+2. `git status && git log --oneline -10` — что есть локально и в репо
+3. Проверить запущен ли сервис: `Get-CimInstance Win32_Process -Filter "Name='python.exe'" | ? { $_.CommandLine -like "*app.cli*" }`
+4. Если предстоит правка фичи — сначала прочитать соответствующий модуль (см. карту §11 журнала), потом редактировать
+5. Лог сессии: записать ключевые изменения в журнал в §6 «Хронология»
