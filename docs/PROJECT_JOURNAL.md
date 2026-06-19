@@ -86,6 +86,8 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-12 | **Русификация задачника**: добавлены `STATUS_BTN_LABELS` и `PRIORITY_LABELS` в `web/routes/tasks.py`; все статус-кнопки в `partials/task_row.html` теперь подписаны по-русски («→ В процессе», «→ Готово», «→ Жду», «→ Отменено», «→ К работе»); кнопки «💬 К сообщению в Telegram», «🌐 В дашборде», «🗑 Удалить»; форма создания: ⬇ низкий / · обычный / ⚡ высокий | `web/routes/tasks.py`, `web/templates/tasks.html`, `web/templates/partials/task_row.html` |
 | 2026-06-12 | **Закреп инструкции в Telegram-боте**: одноразовый скрипт `bot/pin_help.py` снимает старые закрепы (`UnpinAllMessagesRequest`), шлёт краткую инструкцию (команды + кнопки), закрепляет её (`pin_message`) и обновляет список команд бота через `SetBotCommandsRequest` (видим в меню `/`) | `bot/pin_help.py` |
 | 2026-06-19 | **Пуш изменений 11–12 июня в `sigurt33/NexusTG`**: 3 коммита — `feat: add task manager`, `feat(bot): add pin_help script`, `docs: add project journal and update nexustg-dev skill`. `REVIEW.md` оставлен локально (личный отзыв, не для публичного репо) | `git push` (`6235242..dead2da`) |
+| 2026-06-19 | **Deploy-инфраструктура (VPS + Tailscale)**: рунбук `deploy/DEPLOY.md` (провижн Ubuntu, Tailscale, перенос сессии/истории, systemd, `tailscale serve`, бэкапы), systemd-юниты `nexustg-run`/`nexustg-web`, `deploy/update.sh` (pull→sync→restart→healthcheck). Цель: NexusTG 24/7 на сервере, веб с телефона через приватную tailnet (без auth-кода, без открытых портов) | `deploy/` |
+| 2026-06-19 | **PWA**: веб ставится на домашний экран как приложение. `manifest.webmanifest`, `sw.js` (navigation network-first — не показывать старый код после деплоя), роут `web/routes/pwa.py` (отдаёт sw/manifest с корня), иконки 192/512/180+maskable, мета+регистрация SW в `base.html` | `web/static/`, `web/routes/pwa.py`, `web/templates/base.html` |
 
 ---
 
@@ -390,7 +392,8 @@ $env:PYTHONIOENCODING="utf-8"; uv run python -m bot.pin_help
 - [`GUIDE.md`](../GUIDE.md) — внутренний гайд по архитектуре
 - [`REPORT.md`](../REPORT.md) — технический отчёт по фазам
 - [`MIGRATE.md`](../MIGRATE.md) — миграции схемы
-- [`REVIEW.md`](../REVIEW.md) — отзыв о курсе Zerocoder
+- [`deploy/DEPLOY.md`](../deploy/DEPLOY.md) — рунбук деплоя на Linux VPS + Tailscale (бот 24/7, веб как PWA через приватную tailnet)
+- [`REVIEW.md`](../REVIEW.md) — отзыв о курсе Zerocoder (локальный, не в публичном репо)
 - [`skills/nexustg-dev/SKILL.md`](../skills/nexustg-dev/SKILL.md) — скилл для Claude Code по работе с репо
 - [`skills/nexustg-lite/SKILL.md`](../skills/nexustg-lite/SKILL.md) — концепт лёгкого режима
 - Планы итераций: `C:\Users\User\.claude\plans\*.md`
