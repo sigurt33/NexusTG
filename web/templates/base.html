@@ -16,6 +16,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}NexusTG{% endblock %}</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+  <!-- PWA: установка на домашний экран как приложение -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NexusTG">
+  <link rel="apple-touch-icon" href="/static/icons/icon-180.png">
   <link rel="stylesheet" href="/static/pico.min.css">
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/htmx.min.js" defer></script>
@@ -72,5 +80,13 @@
   <main class="container-fluid">
     {% block body %}{% endblock %}
   </main>
+  <script>
+    // Регистрация service worker (PWA). Тихо игнорируем, если недоступно (http без TLS и т.п.)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  </script>
 </body>
 </html>
