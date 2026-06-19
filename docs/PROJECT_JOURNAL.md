@@ -88,6 +88,7 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-19 | **Пуш изменений 11–12 июня в `sigurt33/NexusTG`**: 3 коммита — `feat: add task manager`, `feat(bot): add pin_help script`, `docs: add project journal and update nexustg-dev skill`. `REVIEW.md` оставлен локально (личный отзыв, не для публичного репо) | `git push` (`6235242..dead2da`) |
 | 2026-06-19 | **Deploy-инфраструктура (VPS + Tailscale)**: рунбук `deploy/DEPLOY.md` (провижн Ubuntu, Tailscale, перенос сессии/истории, systemd, `tailscale serve`, бэкапы), systemd-юниты `nexustg-run`/`nexustg-web`, `deploy/update.sh` (pull→sync→restart→healthcheck). Цель: NexusTG 24/7 на сервере, веб с телефона через приватную tailnet (без auth-кода, без открытых портов) | `deploy/` |
 | 2026-06-19 | **PWA**: веб ставится на домашний экран как приложение. `manifest.webmanifest`, `sw.js` (navigation network-first — не показывать старый код после деплоя), роут `web/routes/pwa.py` (отдаёт sw/manifest с корня), иконки 192/512/180+maskable, мета+регистрация SW в `base.html` | `web/static/`, `web/routes/pwa.py`, `web/templates/base.html` |
+| 2026-06-19 | **Вариант хоста на своём ПК (Windows)**: добавлен раздел в `deploy/DEPLOY.md` — NexusTG крутится на Windows-ПК как промежуточный шаг перед VPS, веб отдаётся в tailnet через `tailscale serve` (HTTPS для PWA), переезд на VPS 1:1. Выбран пользователем как первый шаг. Бот/приложение живут только пока ПК включён | `deploy/DEPLOY.md` |
 
 ---
 
