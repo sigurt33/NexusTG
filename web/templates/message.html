@@ -95,6 +95,10 @@ async function sendQuickReply(e, mid){
     </div>
   </details>
   <button type="button"
+          title="Создать задачу из этого сообщения и открыть её в задачнике"
+          hx-post="/tasks/from-message/{{ target.id }}"
+          hx-target="this" hx-swap="outerHTML">📋 → В задачник</button>
+  <button type="button"
           title="Заархивировать — больше не показывать в инбоксе"
           hx-post="/actions/{{ target.id }}/archive"
           hx-target="#msg-actions" hx-swap="outerHTML">📦 Архив</button>

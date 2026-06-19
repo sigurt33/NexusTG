@@ -68,6 +68,28 @@ async def ensure_columns(conn: aiosqlite.Connection) -> None:
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )"""
     )
+    # tasks — задачник (todo/doing/waiting/done/cancelled), может быть привязана к сообщению
+    await conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            title             TEXT NOT NULL,
+            status            TEXT NOT NULL DEFAULT 'todo'
+                                CHECK(status IN ('todo','doing','waiting','done','cancelled')),
+            priority          TEXT NOT NULL DEFAULT 'normal'
+                                CHECK(priority IN ('low','normal','high')),
+            due_at            TEXT,
+            notes             TEXT,
+            source_message_id TEXT REFERENCES messages(id) ON DELETE SET NULL,
+            created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
+            completed_at      TEXT
+        )
+        """
+    )
+    await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
+    await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_due    ON tasks(due_at) WHERE due_at IS NOT NULL")
+    await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_source ON tasks(source_message_id) WHERE source_message_id IS NOT NULL")
     # classification_examples
     await conn.execute(
         """

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Задачник — NexusTG{% endblock %}
+{% block body %}
+<h3>📋 Задачник</h3>
+
+<details class="task-create-box">
+  <summary title="Создать задачу вручную, без привязки к сообщению">+ Новая задача</summary>
+  <form hx-post="/tasks/create" class="task-create-form" style="margin:.5rem 0;display:flex;flex-direction:column;gap:.4rem;max-width:560px;">
+    <input name="title" placeholder="Что сделать..." required title="Заголовок задачи">
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+      <select name="priority" title="Приоритет задачи">
+        <option value="low">⬇ низкий</option>
+        <option value="normal" selected>· обычный</option>
+        <option value="high">⚡ высокий</option>
+      </select>
+      <input type="datetime-local" name="due_at" title="Дедлайн (опционально)">
+    </div>
+    <textarea name="notes" rows="2" placeholder="Заметки (опционально)..." title="Свободный текст под задачей"></textarea>
+    <button type="submit" title="Создать задачу">Создать</button>
+  </form>
+</details>
+
+<div class="tasks-board" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.8rem;margin-top:.8rem;">
+  {% for st in statuses %}
+  <section class="tasks-col" data-status="{{ st }}" style="background:var(--card-background-color,rgba(0,0,0,.03));border-radius:8px;padding:.6rem;">
+    <h4 style="margin:.2rem 0 .6rem;">{{ status_labels[st] }} <small style="opacity:.65;">({{ by_status[st]|length }})</small></h4>
+    <div class="tasks-list" id="col-{{ st }}" style="display:flex;flex-direction:column;gap:.4rem;">
+      {% for t in by_status[st] %}
+        {% include "partials/task_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

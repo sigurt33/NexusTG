@@ -9,6 +9,8 @@ from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
 
 from app.config import DATA_DIR
+from app.links import telegram_deep_link
+from app.tasks import create_task_from_message
 
 log = logging.getLogger(__name__)
 
@@ -23,23 +25,9 @@ def _make_bot_client() -> TelegramClient:
 
 
 def _tg_deep_link(message_id: str, is_dm: bool = False) -> str:
-    """Ссылка, открывающая Telegram на конкретном сообщении.
-    - для ЛС: tg://openmessage?user_id=...
-    - для супергрупп/каналов: https://t.me/c/{raw_channel_id}/{msg_id}
-    """
-    try:
-        chat_id_s, msg_id_s = message_id.split(":", 1)
-        chat_id_int = int(chat_id_s)
-        if is_dm:
-            return f"tg://openmessage?user_id={abs(chat_id_int)}&message_id={msg_id_s}"
-        # супергруппа/канал — chat_id положительный (raw), либо -100xxx
-        raw = chat_id_int
-        if chat_id_int < 0:
-            s = str(chat_id_int)
-            raw = int(s[4:]) if s.startswith("-100") else abs(chat_id_int)
-        return f"https://t.me/c/{raw}/{msg_id_s}"
-    except Exception:
-        return f"{WEB_BASE}/message/{message_id}"
+    """Ссылка на сообщение в Telegram. Fallback — открыть в дашборде."""
+    link = telegram_deep_link(message_id, is_dm=is_dm)
+    return link or f"{WEB_BASE}/message/{message_id}"
 
 
 async def _format_payload(conn, message_id: str) -> tuple[str, list] | None:
@@ -77,6 +65,7 @@ async def _format_payload(conn, message_id: str) -> tuple[str, list] | None:
          Button.inline("💤 1 ч", f"snooze:{message_id}:1h".encode())],
         [Button.inline("🌅 Завтра 10:00", f"snooze:{message_id}:tomorrow10".encode()),
          Button.inline("📦 Архив", f"archive:{message_id}".encode())],
+        [Button.inline("📋 В задачник", f"task:{message_id}".encode())],
         [Button.url("🌐 Открыть в дашборде", f"{WEB_BASE}/message/{message_id}"),
          Button.url("💬 К диалогу в Telegram", _tg_deep_link(message_id, is_dm=bool(row["is_dm"])))],
     ]
@@ -169,6 +158,7 @@ def register_handlers(bot: TelegramClient, conn, cfg) -> None:
             "Привет! Я буду присылать сюда новые задачи из Telegram.\n"
             "Команды:\n"
             "/inbox — топ-10 активных задач\n"
+            "/tasks — открытые задачи из задачника\n"
             "/digest — сводка за вчера\n"
             "/help — помощь",
         )
@@ -180,8 +170,9 @@ def register_handlers(bot: TelegramClient, conn, cfg) -> None:
         await event.reply(
             "/start — приветствие\n"
             "/inbox — последние 10 задач\n"
+            "/tasks — открытые задачи из задачника (todo+doing)\n"
             "/digest — вчерашняя сводка\n"
-            "Кнопки на каждом сообщении: ✅ Готово, 💤 1 ч, 🌅 Завтра 10:00, 📦 Архив, 🌐 Открыть.",
+            "Кнопки на сообщении: ✅ Готово, 💤 1 ч, 🌅 Завтра 10:00, 📦 Архив, 📋 В задачник, 🌐 Открыть.",
         )
 
     @bot.on(events.NewMessage(pattern=r"^/inbox"))
@@ -206,6 +197,37 @@ def register_handlers(bot: TelegramClient, conn, cfg) -> None:
             return
         for mid in ids:
             await send_inbox_notification(bot, conn, cfg, mid)
+
+    @bot.on(events.NewMessage(pattern=r"^/tasks"))
+    async def _tasks(event):
+        if not _allowed(event):
+            return
+        cur = await conn.execute(
+            """SELECT id, title, priority, due_at, status
+               FROM tasks WHERE status IN ('todo','doing')
+               ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,
+                        due_at IS NULL, due_at, created_at
+               LIMIT 10"""
+        )
+        rows = await cur.fetchall()
+        await cur.close()
+        if not rows:
+            await event.reply("📋 Задачник пуст 🎉",
+                              buttons=[[Button.url("🌐 Открыть задачник", f"{WEB_BASE}/tasks")]])
+            return
+        prio_emoji = {"high": "⚡", "normal": "·", "low": "▫"}
+        lines = [f"📋 Задачник · открытых: {len(rows)}"]
+        kb_rows = []
+        for r in rows:
+            tid, title, prio, due, status = r[0], r[1], r[2], r[3], r[4]
+            tag = "🛠" if status == "doing" else "📥"
+            line = f"{tag} #{tid} {prio_emoji.get(prio,'·')} {title}"
+            if due:
+                line += f" · ⏰ {due}"
+            lines.append(line)
+            kb_rows.append([Button.inline(f"✓ #{tid}", f"tdone:{tid}".encode())])
+        kb_rows.append([Button.url("🌐 Открыть задачник", f"{WEB_BASE}/tasks")])
+        await event.reply("\n".join(lines), buttons=kb_rows)
 
     @bot.on(events.NewMessage(pattern=r"^/digest"))
     async def _digest(event):
@@ -264,6 +286,34 @@ def register_handlers(bot: TelegramClient, conn, cfg) -> None:
             await event.edit(event.message.message + f"\n✓ Архив · {datetime.now().strftime('%H:%M')}",
                              buttons=None)
             await event.answer("В архиве")
+            return
+        if action == "task":
+            mid = data[len("task:"):]
+            task_id = await create_task_from_message(conn, mid)
+            if task_id is None:
+                await event.answer("Сообщение не найдено", alert=True)
+                return
+            await event.edit(
+                event.message.message + f"\n📋 → Задача #{task_id} создана · {datetime.now().strftime('%H:%M')}",
+                buttons=[[Button.url("📋 Открыть задачу", f"{WEB_BASE}/tasks#task-{task_id}")]],
+            )
+            await event.answer(f"Задача #{task_id} создана")
+            return
+        if action == "tdone":
+            try:
+                tid = int(data[len("tdone:"):])
+            except ValueError:
+                await event.answer("bad task id"); return
+            await conn.execute(
+                "UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') WHERE id=?",
+                (tid,),
+            )
+            await conn.commit()
+            await event.answer(f"Задача #{tid} закрыта")
+            try:
+                await event.edit(event.message.message + f"\n✓ #{tid} → done · {datetime.now().strftime('%H:%M')}")
+            except Exception:
+                pass
             return
         await event.answer("Неизвестное действие")
 

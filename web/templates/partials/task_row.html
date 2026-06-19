@@ -1,0 +1,36 @@
+<article id="task-{{ t.id }}" class="task-card prio-{{ t.priority }}"
+         style="border-left:4px solid {% if t.priority=='high' %}#e74c3c{% elif t.priority=='low' %}#95a5a6{% else %}#3498db{% endif %};
+                background:var(--background-color,#fff);border-radius:6px;padding:.5rem .6rem;box-shadow:0 1px 2px rgba(0,0,0,.06);">
+  <div class="task-title" style="font-weight:600;line-height:1.25;">{{ t.title }}</div>
+  {% if t.due_at %}<div class="task-due" style="font-size:.8rem;opacity:.8;">⏰ {{ t.due_at }}</div>{% endif %}
+  {% if t.notes %}<div class="task-notes" style="font-size:.85rem;margin-top:.2rem;white-space:pre-wrap;">{{ t.notes }}</div>{% endif %}
+  {% if t.source_message_id %}
+  <div class="task-src" style="font-size:.78rem;opacity:.75;margin-top:.25rem;"
+       title="Из сообщения: {{ t.chat_title or '—' }} / {{ t.sender_name or '—' }}">
+    📨 {{ t.chat_title or '—' }} · {{ t.sender_name or '—' }}
+  </div>
+  {% endif %}
+  <div class="task-actions" style="display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.45rem;">
+    {% for st in statuses %}
+      {% if st != t.status %}
+        <button type="button" title="Перевести задачу в статус «{{ status_labels[st] }}»"
+                hx-post="/tasks/{{ t.id }}/status"
+                hx-vals='{"status":"{{ st }}"}'
+                hx-target="#task-{{ t.id }}" hx-swap="outerHTML"
+                style="font-size:.78rem;padding:.15rem .4rem;">→ {{ status_btn_labels[st] }}</button>
+      {% endif %}
+    {% endfor %}
+    {% if t.tg_link %}
+      <a href="{{ t.tg_link }}" title="Открыть исходное сообщение в приложении Telegram"
+         style="font-size:.78rem;padding:.15rem .4rem;">💬 К сообщению в Telegram</a>
+    {% endif %}
+    {% if t.source_message_id %}
+      <a href="/message/{{ t.source_message_id }}" title="Открыть карточку сообщения в дашборде"
+         style="font-size:.78rem;padding:.15rem .4rem;">🌐 В дашборде</a>
+    {% endif %}
+    <button type="button" title="Удалить задачу безвозвратно" hx-confirm="Удалить задачу?"
+            hx-post="/tasks/{{ t.id }}/delete"
+            hx-target="#task-{{ t.id }}" hx-swap="delete"
+            style="font-size:.78rem;padding:.15rem .4rem;margin-left:auto;">🗑 Удалить</button>
+  </div>
+</article>

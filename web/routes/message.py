@@ -6,6 +6,7 @@ import json
 from fastapi import APIRouter, Form, HTTPException, Request
 
 from app.config import load_config
+from app.links import telegram_deep_link
 
 router = APIRouter()
 
@@ -45,20 +46,7 @@ async def _load_detail(conn, message_id: str):
     is_example = (await cur.fetchone()) is not None
     await cur.close()
 
-    try:
-        chat_id_s, msg_id_s = message_id.split(":", 1)
-        chat_id_int = int(chat_id_s)
-        if target.get("is_dm"):
-            tg_link = f"tg://openmessage?user_id={abs(chat_id_int)}&message_id={msg_id_s}"
-        else:
-            raw = chat_id_int
-            if chat_id_int < 0:
-                s = str(chat_id_int)
-                raw = int(s[4:]) if s.startswith("-100") else abs(chat_id_int)
-            # privatepost открывает супергруппу/канал в Telegram Desktop без браузера
-            tg_link = f"tg://privatepost?channel={raw}&post={msg_id_s}"
-    except (ValueError, KeyError):
-        tg_link = "#"
+    tg_link = telegram_deep_link(message_id, is_dm=bool(target.get("is_dm"))) or "#"
 
     return {
         "target": target, "context": ctx_rows,
