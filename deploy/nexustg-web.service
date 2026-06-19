@@ -1,0 +1,17 @@
+[Unit]
+Description=NexusTG — web dashboard (uvicorn, 127.0.0.1:8000)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nexustg
+WorkingDirectory=/home/nexustg/NexusTG
+Environment=PYTHONIOENCODING=utf-8
+# Веб слушает только localhost. Наружу его отдаёт `tailscale serve` (приватный HTTPS).
+ExecStart=/home/nexustg/.local/bin/uv run python -m app.cli web
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
