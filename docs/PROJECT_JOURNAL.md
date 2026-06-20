@@ -89,6 +89,8 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-19 | **Deploy-инфраструктура (VPS + Tailscale)**: рунбук `deploy/DEPLOY.md` (провижн Ubuntu, Tailscale, перенос сессии/истории, systemd, `tailscale serve`, бэкапы), systemd-юниты `nexustg-run`/`nexustg-web`, `deploy/update.sh` (pull→sync→restart→healthcheck). Цель: NexusTG 24/7 на сервере, веб с телефона через приватную tailnet (без auth-кода, без открытых портов) | `deploy/` |
 | 2026-06-19 | **PWA**: веб ставится на домашний экран как приложение. `manifest.webmanifest`, `sw.js` (navigation network-first — не показывать старый код после деплоя), роут `web/routes/pwa.py` (отдаёт sw/manifest с корня), иконки 192/512/180+maskable, мета+регистрация SW в `base.html` | `web/static/`, `web/routes/pwa.py`, `web/templates/base.html` |
 | 2026-06-19 | **Вариант хоста на своём ПК (Windows)**: добавлен раздел в `deploy/DEPLOY.md` — NexusTG крутится на Windows-ПК как промежуточный шаг перед VPS, веб отдаётся в tailnet через `tailscale serve` (HTTPS для PWA), переезд на VPS 1:1. Выбран пользователем как первый шаг. Бот/приложение живут только пока ПК включён | `deploy/DEPLOY.md` |
+| 2026-06-20 | **Запуск на ПК через Tailscale — рабочий**: ПК `win-i6dk85dtqhr` = `100.107.156.123`, веб отдан как `https://win-i6dk85dtqhr.tail445fd4.ts.net` (`tailscale serve` → 127.0.0.1:8000), PWA ставится с телефона. Конфликт с Surfshark VPN решён через Surfshark **Bypasser** (исключить `tailscaled.exe`). На телефоне — только один VPN одновременно (Tailscale ⟷ Surfshark взаимоисключающи) | — |
+| 2026-06-20 | **Мобильная адаптация веба**: блок `@media (max-width:768px)` в `app.css` — навигация в прокручиваемую ленту, лого 7rem→2.2rem, строка сообщения в 2-рядную карточку, крупные тап-таргеты (42px), таблицы в горизонтальный скролл, фильтры/kv в столбик, 16px против iOS-зума. SW поднят до `nexustg-v2` для сброса кэша | `web/static/app.css`, `web/static/sw.js` |
 
 ---
 
@@ -164,6 +166,8 @@ uv run python -m bot.pin_help
 - **`uv run`** порождает 2 процесса python.exe (wrapper + сам процесс) — это норма, не дубликат.
 - **CP1251 stdout на Windows** — `print()` с кириллицей/эмодзи падает с `UnicodeEncodeError`. Решения: `PYTHONIOENCODING=utf-8` перед запуском или `sys.stdout.reconfigure(encoding="utf-8")` в начале скрипта.
 - **Параллельная Telethon-сессия бота** — `bot.start(bot_token=...)` поверх уже работающего бота не ломается (bot API толерантен), но писать в один и тот же session-файл одновременно из двух процессов не стоит. `bot/pin_help.py` использует тот же `tg_bot.session` — запускать только когда основной run остановлен, либо после, либо вместе (telegram bot API толерантен, но во избежание гонок — последовательно).
+- **Tailscale ↔ Surfshark (и любой WireGuard-VPN) конфликтуют.** Surfshark подменяет DNS доменов `*.tailscale.com` на фейковые `192.200.0.x` → Tailscale не входит (`forbidden by access permissions` в логах). Симптом: кнопка «Log in» молчит. Фикс на ПК: Surfshark **Bypasser** — исключить `C:\Program Files\Tailscale\tailscaled.exe` из VPN (в WireGuard-режиме Bypasser может быть недоступен → переключить Surfshark на OpenVPN). Проверка входа: `& "C:\Program Files\Tailscale\tailscale.exe" status` (должен быть `BackendState: Running` + IP `100.x`). На **телефоне** Bypasser не спасёт — мобильная ОС разрешает только один VPN сразу, Tailscale и Surfshark взаимоисключающи.
+- **`tailscale serve` нельзя проверить с той же машины** — TCP на собственный tailnet-IP:443 не разворачивается через TUN (Windows). Тестировать только с другого устройства (телефон).
 
 ---
 
