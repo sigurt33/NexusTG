@@ -262,3 +262,86 @@ input:focus, select:focus, textarea:focus{
 .qreply-tplbar a{font-size:.85rem;}
 #tpl-menu{min-width:240px;max-height:300px;overflow-y:auto;}
 #tpl-menu button{display:block;width:100%;text-align:left;margin-bottom:.3rem;}
+
+/* ============================================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ (телефон, ≤768px).
+   Всё внутри media-query — десктоп не затрагивается.
+   ============================================================ */
+@media (max-width: 768px) {
+  body > main { padding-block: .6rem; }
+  main.container-fluid { padding-inline: .6rem; }
+  /* фон на 100vw не должен давать горизонтальную прокрутку страницы */
+  body { overflow-x: hidden; }
+
+  /* — Навигация: горизонтальная прокручиваемая лента вкладок — */
+  nav.topnav {
+    gap: .4rem;
+    padding: .4rem .55rem;
+    margin-bottom: .8rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  nav.topnav::-webkit-scrollbar { display: none; }
+  nav.topnav > * { flex: 0 0 auto; }              /* пункты не сжимаются */
+  nav.topnav a:not(.brand) { padding: .35rem .65rem; font-size: .9rem; }
+  nav.topnav a:not(.brand):hover { transform: none; }   /* без «прыжков» от sticky-hover на тач-экране */
+  .brand { gap: .35rem; }
+  .brand-logo { width: 2.2rem; height: 2.2rem; }
+  .brand strong { font-size: 1.05rem; }
+  .me-box { margin-left: .25rem; padding: .1rem .4rem; }
+  .me-nick { display: none; }                     /* экономим место, оставляем аватар */
+  .scheme-picker { margin-left: .25rem; }
+
+  /* — Строка сообщения: компактная карточка в 2 ряда — */
+  .msg-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "badges right"
+      "body   body";
+    gap: .25rem .5rem;
+    padding: .75rem .7rem;
+  }
+  .msg-row > div:nth-child(1) { grid-area: badges; display: flex; gap: .25rem; align-items: center; flex-wrap: wrap; }
+  .msg-row > div:nth-child(2) { grid-area: body; }
+  .msg-row > div:nth-child(3) { grid-area: right; display: flex; flex-direction: column; align-items: flex-end; gap: .1rem; }
+  .msg-row:hover { transform: none; }              /* без сдвига на тач */
+  .snippet { font-size: 1rem; line-height: 1.4; }
+  .meta { font-size: .82em; }
+
+  /* — Действия: крупные тап-таргеты — */
+  .actions { gap: .45rem; margin-top: .55rem; }
+  .actions button,
+  .actions details summary {
+    font-size: .9rem;
+    padding: .5rem .8rem;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .snooze-opts { right: 0; left: auto; max-width: calc(100vw - 2rem); }
+  .snooze-opts button { min-height: 42px; width: 100%; }
+
+  /* — Фильтры: вертикально, на всю ширину — */
+  .filters { flex-direction: column; align-items: stretch; gap: .5rem; }
+  .filters input, .filters select, .filters button { width: 100%; }
+
+  /* — Таблицы: горизонтальная прокрутка вместо разъезда вёрстки — */
+  main table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* — Карточка /message: ключ-значение в столбик — */
+  .kv { grid-template-columns: 1fr; gap: .15rem .6rem; }
+  .kv dt { margin-top: .5rem; }
+
+  /* — Все основные кнопки/поля удобны для пальца; 16px против iOS-зума — */
+  main :where(button, [type="submit"], [type="button"]):not(.sw):not(.theme-toggle) { min-height: 42px; }
+  textarea, input, select { font-size: 16px; }
+  .qreply textarea, .rule-edit textarea { min-height: 6rem; }
+
+  /* — Заголовки компактнее — */
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.12rem; }
+  .inbox-head .kbd-help { display: none; }         /* подсказки по клавишам на телефоне не нужны */
+}
