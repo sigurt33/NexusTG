@@ -11,4 +11,4 @@ grok_daily_token_budget = 20000000
 llm_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
 llm_input_usd_per_m = 0.075
 llm_output_usd_per_m = 0.30
-notify_tg_bot = false
+notify_tg_bot = true
