@@ -36,6 +36,9 @@
       <video class="brand-logo" src="/static/logo.mp4" autoplay loop muted playsinline></video>
       <strong>NexusTG</strong>
     </a>
+    <input id="nav-toggle" class="nav-toggle" type="checkbox" hidden>
+    <label for="nav-toggle" class="nav-burger" title="Меню" aria-label="Открыть меню">☰</label>
+    <div class="nav-collapse">
     <a href="/"        class="{% if active=='inbox' %}active{% endif %}"    title="Главная очередь задач — отсортированы по приоритету">Инбокс</a>
     <a href="/search"  class="{% if active=='search' %}active{% endif %}"   title="Полнотекстовый поиск по всем захваченным сообщениям">Поиск</a>
     <a href="/topics"  class="{% if active=='topics' %}active{% endif %}"   title="Управление таксономией: переименование, скрытие, слияние, иерархия">Темы</a>
@@ -48,6 +51,7 @@
     <a href="/rules"    class="{% if active=='rules' %}active{% endif %}"    title="Алина-режим: правила свободным текстом, влияют на классификацию">Правила</a>
     <a href="/templates" class="{% if active=='templates' %}active{% endif %}" title="Шаблоны быстрых ответов">Шаблоны</a>
     <a href="/health"  class="{% if active=='health' %}active{% endif %}"   title="Состояние сервиса: лаг ingest, classified_at, расход токенов">Health</a>
+    </div>
     <div class="scheme-picker" title="Выбрать цветовую схему страницы">
       <button class="sw sw-pink"   data-scheme="pink"   type="button" title="Розовая схема"></button>
       <button class="sw sw-green"  data-scheme="green"  type="button" title="Зелёная схема"></button>

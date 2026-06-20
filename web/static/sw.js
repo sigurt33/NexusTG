@@ -2,7 +2,7 @@
  * Главное: НЕ кэшировать HTML, чтобы после деплоя не показывать старый код.
  * Версию повышать при изменении стратегии (старые кэши чистятся в activate).
  */
-const CACHE = "nexustg-v2";
+const CACHE = "nexustg-v3";
 const PRECACHE = ["/static/app.css", "/static/pico.min.css"];
 
 self.addEventListener("install", (e) => {

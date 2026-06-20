@@ -263,6 +263,11 @@ input:focus, select:focus, textarea:focus{
 #tpl-menu{min-width:240px;max-height:300px;overflow-y:auto;}
 #tpl-menu button{display:block;width:100%;text-align:left;margin-bottom:.3rem;}
 
+/* Гамбургер-меню: на десктопе скрыт, вкладки ведут себя как раньше */
+.nav-toggle { display: none; }
+.nav-burger { display: none; }
+.nav-collapse { display: contents; }
+
 /* ============================================================
    МОБИЛЬНАЯ АДАПТАЦИЯ (телефон, ≤768px).
    Всё внутри media-query — десктоп не затрагивается.
@@ -273,27 +278,63 @@ input:focus, select:focus, textarea:focus{
   /* фон на 100vw не должен давать горизонтальную прокрутку страницы */
   body { overflow-x: hidden; }
 
-  /* — Навигация: горизонтальная прокручиваемая лента вкладок — */
+  /* — Навигация: гамбургер-меню — */
   nav.topnav {
-    gap: .4rem;
-    padding: .4rem .55rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .7rem;
     margin-bottom: .8rem;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    overflow: visible;
   }
-  nav.topnav::-webkit-scrollbar { display: none; }
-  nav.topnav > * { flex: 0 0 auto; }              /* пункты не сжимаются */
-  nav.topnav a:not(.brand) { padding: .35rem .65rem; font-size: .9rem; }
-  nav.topnav a:not(.brand):hover { transform: none; }   /* без «прыжков» от sticky-hover на тач-экране */
-  .brand { gap: .35rem; }
-  .brand-logo { width: 2.2rem; height: 2.2rem; }
-  .brand strong { font-size: 1.05rem; }
-  .me-box { margin-left: .25rem; padding: .1rem .4rem; }
-  .me-nick { display: none; }                     /* экономим место, оставляем аватар */
-  .scheme-picker { margin-left: .25rem; }
+  nav.topnav a:not(.brand):hover { transform: none; }   /* без «прыжков» sticky-hover на тач */
+  .brand { gap: .4rem; order: 0; }
+  .brand-logo { width: 2.3rem; height: 2.3rem; }
+  .brand strong { font-size: 1.1rem; }
+  .scheme-picker { display: none; }               /* выбор схемы в моб. прячем — лишний шум */
+  .me-box { order: 1; margin-left: 0; padding: .1rem .4rem; }
+  .me-nick { display: none; }                     /* оставляем только аватар */
+  .theme-toggle { order: 2; margin-left: 0; }
+
+  /* кнопка-гамбургер */
+  .nav-burger {
+    order: 3;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 44px; height: 44px;
+    font-size: 1.5rem; line-height: 1;
+    color: var(--pico-primary, inherit);
+    border: 1px solid var(--pico-primary, var(--pico-muted-border-color));
+    border-radius: .55rem;
+    background: transparent;
+    cursor: pointer; user-select: none;
+  }
+  .nav-burger:active { transform: scale(.95); }
+
+  /* выпадающее меню (по чекбоксу, без JS) */
+  .nav-collapse {
+    order: 4;
+    flex-basis: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .15rem;
+    margin-top: .2rem;
+    padding: .4rem;
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: .6rem;
+    box-shadow: 0 10px 26px -10px rgba(0,0,0,.35);
+  }
+  .nav-toggle:checked ~ .nav-collapse { display: flex; animation: nx-fadein .18s ease-out; }
+  .nav-collapse a:not(.brand) {
+    display: block; width: 100%;
+    padding: .75rem .85rem;
+    border-radius: .5rem;
+    font-size: 1.02rem;
+  }
+  .nav-collapse a:not(.brand):hover { transform: none; }
 
   /* — Строка сообщения: компактная карточка в 2 ряда — */
   .msg-row {
