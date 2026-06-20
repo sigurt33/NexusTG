@@ -7,3 +7,5 @@ backups/
 *.egg-info/
 .uv-cache/
 .claude/
+scrin/
+REVIEW.md
