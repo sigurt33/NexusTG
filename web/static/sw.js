@@ -1,9 +1,9 @@
-/* NexusTG service worker — минимальный, network-first для навигации.
- * Главное: НЕ кэшировать HTML, чтобы после деплоя не показывать старый код.
- * Версию повышать при изменении стратегии (старые кэши чистятся в activate).
+/* NexusTG service worker — network-first для всего своего origin.
+ * Так после деплоя никогда не показывается старый код/стили; кэш —
+ * только оффлайн-фолбэк. Версию повышать при изменении логики.
  */
-const CACHE = "nexustg-v4";
-const PRECACHE = ["/static/app.css", "/static/pico.min.css"];
+const CACHE = "nexustg-v5";
+const PRECACHE = ["/", "/static/app.css", "/static/pico.min.css"];
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -21,28 +21,18 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET") return; // POST/HTMX-мутации — мимо кэша
+  if (req.method !== "GET") return; // POST/HTMX-мутации — мимо
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // только свой origin
 
-  // Навигация (HTML) — всегда из сети; при оффлайне отдаём что есть в кэше.
-  if (req.mode === "navigate") {
-    e.respondWith(fetch(req).catch(() => caches.match(req)));
-    return;
-  }
-
-  // Статика — stale-while-revalidate: мгновенно из кэша, в фоне обновляем.
-  if (url.pathname.startsWith("/static/")) {
-    e.respondWith(
-      caches.match(req).then((cached) => {
-        const net = fetch(req)
-          .then((res) => {
-            caches.open(CACHE).then((c) => c.put(req, res.clone()));
-            return res;
-          })
-          .catch(() => cached);
-        return cached || net;
+  // Сеть в первую очередь; кэш обновляем в фоне и используем только при оффлайне.
+  e.respondWith(
+    fetch(req)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
       })
-    );
-  }
+      .catch(() => caches.match(req))
+  );
 });
