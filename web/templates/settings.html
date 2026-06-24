@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Настройки — NexusTG{% endblock %}
+{% block body %}
+<h3>⚙ Настройки</h3>
+<p style="opacity:.75;font-size:.9rem;">Настройки сохраняются в <code>config.toml</code>. Часы до дедлайна применяются сразу; остальное — после перезапуска сервиса.</p>
+
+<form hx-post="/settings" style="display:flex;flex-direction:column;gap:.7rem;max-width:560px;">
+  <label>Часы до дедлайна для напоминания <small>(применяется сразу)</small>
+    <input type="number" name="task_reminder_hours_before" min="0" max="168"
+           value="{{ cfg.task_reminder_hours_before | default(3) }}">
+  </label>
+
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+    <label style="flex:1;">Активные часы — старт <small>(перезапуск)</small>
+      <input name="active_hours_start" value="{{ cfg.active_hours_start | default('10:00') }}" placeholder="10:00">
+    </label>
+    <label style="flex:1;">Активные часы — конец <small>(перезапуск)</small>
+      <input name="active_hours_end" value="{{ cfg.active_hours_end | default('18:30') }}" placeholder="18:30">
+    </label>
+  </div>
+
+  <fieldset>
+    <legend>Уведомления <small>(перезапуск)</small></legend>
+    <label><input type="checkbox" name="notify_tg_bot" {% if cfg.notify_tg_bot %}checked{% endif %}> Telegram-бот</label>
+    <label><input type="checkbox" name="notify_windows_toast" {% if cfg.notify_windows_toast %}checked{% endif %}> Windows-toast</label>
+    <label><input type="checkbox" name="notify_tg_self" {% if cfg.notify_tg_self %}checked{% endif %}> Селф-ЛС (Saved Messages)</label>
+  </fieldset>
+
+  <label>Дневной бюджет токенов LLM <small>(перезапуск)</small>
+    <input type="number" name="grok_daily_token_budget" min="0" value="{{ cfg.grok_daily_token_budget | default(0) }}">
+  </label>
+  <label>Модель LLM <small>(перезапуск)</small>
+    <input name="grok_model" value="{{ cfg.grok_model | default('') }}">
+  </label>
+
+  <button type="submit">💾 Сохранить</button>
+</form>
+
+<h4 style="margin-top:1.2rem;">Секреты (только из <code>.env</code>)</h4>
+<table>
+  <tbody>
+    {% for k, present in secrets.items() %}
+    <tr><td><code>{{ k }}</code></td><td>{% if present %}✅ задано{% else %}— не задано{% endif %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

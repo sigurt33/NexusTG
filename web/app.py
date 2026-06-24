@@ -109,7 +109,7 @@ def create_app() -> FastAPI:
     templates.env.globals["me"] = load_cached_me() or {}
     app.state.templates = templates
 
-    from web.routes import inbox, message, search, topics, digest, health, actions, chats, reports, rules, done, templates_route, tasks, pwa
+    from web.routes import inbox, message, search, topics, digest, health, actions, chats, reports, rules, done, templates_route, tasks, pwa, settings
     app.include_router(pwa.router)
     app.include_router(done.router)
     app.include_router(templates_route.router)
@@ -124,5 +124,6 @@ def create_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(rules.router)
     app.include_router(tasks.router)
+    app.include_router(settings.router)
 
     return app
