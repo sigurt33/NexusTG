@@ -26,8 +26,9 @@ NexusTG слушает ваш аккаунт Telegram, выбирает толь
 - **Edit/delete-трекинг.** Правки складываются в `raw_json.edits[]`, удаления — soft-delete.
 - **LLM-классификация (Gemini / Grok / OpenAI-совместимое API).** Каждое сообщение получает тему, приоритет (u/i) и оценку, с бюджетом токенов в день.
 - **Иерархия тем** с merge, set-parent, историей сообщений; обучающие примеры подмешиваются в системный промт.
-- **Веб-интерфейс (FastAPI + Jinja + Pico.css):** inbox, поиск, отчёты (weekly/topics/chats/senders), CSV-экспорт, правила, шаблоны ответов.
-- **Уведомления:** Windows toast, self-ЛС в Telegram, отдельный Telegram-бот для inbox-пушей.
+- **Веб-интерфейс (FastAPI + Jinja + Pico.css):** inbox, поиск, отчёты (weekly/topics/chats/senders), CSV-экспорт, правила, шаблоны ответов, **вкладка «Настройки»** для правки `config.toml` прямо из браузера.
+- **Задачник.** Задачи из сообщений или вручную, kanban по статусам, приоритеты и дедлайны, inline-редактирование. **Напоминания о дедлайнах** приходят в Telegram-бот за N часов до срока и при просрочке.
+- **Уведомления:** Windows toast, self-ЛС в Telegram, отдельный Telegram-бот для inbox-пушей и напоминаний о дедлайнах.
 - **Полностью локально.** Всё под `./data/` (`app.db`, `tg.session`, `logs/`). Никаких записей в `%APPDATA%`.
 
 ---
@@ -119,6 +120,10 @@ notify_windows_toast = true
 notify_tg_self       = true
 notify_tg_bot        = false
 
+# За сколько часов до дедлайна задачи слать напоминание в бот
+# (правится и из браузера на вкладке «Настройки»)
+task_reminder_hours_before = 3
+
 ui_lang  = "ru"
 
 # LLM (по умолчанию — Gemini через OpenAI-совместимый эндпоинт)
@@ -156,6 +161,9 @@ uv run python -m app.cli backup   # zip-бэкап data/ в ./backups/
 |---|---|
 | Inbox | `/` |
 | Поиск | `/search` |
+| Задачник (kanban, дедлайны, inline-правка) | `/tasks` |
+| Выполненные | `/done` |
+| Дайджест | `/digest` |
 | Чаты (allow/block) | `/chats` |
 | Темы (дерево, merge) | `/topics?view=tree` |
 | История темы | `/topics/{id}/messages` |
@@ -164,6 +172,7 @@ uv run python -m app.cli backup   # zip-бэкап data/ в ./backups/
 | Правила | `/rules` |
 | Шаблоны ответов | `/templates` |
 | Экспорт CSV | `/export/messages.csv?from=&to=&topic=&chat=&min_score=`, `/export/topics.csv` |
+| Настройки (правка `config.toml`) | `/settings` |
 | Health | `/health` |
 
 Действия над сообщением: `/message/{id}/reclassify`, `/message/{id}/priority`, `/message/{id}/save-example`.
@@ -177,7 +186,7 @@ uv run python -m app.cli backup   # zip-бэкап data/ в ./backups/
 3. В `config.toml`: `notify_tg_bot = true`.
 4. Бот стартует автоматически в `run`-режиме; отдельный запуск — `uv run python -m app.cli bot`.
 
-Бот шлёт уведомления **только** на `TG_MY_ID`.
+Бот шлёт уведомления **только** на `TG_MY_ID`. Помимо inbox-пушей, бот присылает **напоминания о дедлайнах задач** — за `task_reminder_hours_before` часов до срока и при просрочке, с кнопкой «✅ Готово».
 
 ---
 
@@ -235,7 +244,7 @@ NexusTG/
 
 ## Статус
 
-Phase 5: ingestion + LLM-классификация + веб + бот + отчёты + CSV-экспорт + обучающие примеры.
+Phase 5+: ingestion + LLM-классификация + веб + бот + отчёты + CSV-экспорт + обучающие примеры + задачник с напоминаниями о дедлайнах + вкладка «Настройки».
 
 ---
 
