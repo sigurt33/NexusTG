@@ -90,6 +90,10 @@ async def ensure_columns(conn: aiosqlite.Connection) -> None:
     await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
     await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_due    ON tasks(due_at) WHERE due_at IS NOT NULL")
     await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_source ON tasks(source_message_id) WHERE source_message_id IS NOT NULL")
+    # tasks.reminder_stage
+    cols = await _table_columns(conn, "tasks")
+    if "reminder_stage" not in cols:
+        await conn.execute("ALTER TABLE tasks ADD COLUMN reminder_stage INTEGER NOT NULL DEFAULT 0")
     # classification_examples
     await conn.execute(
         """

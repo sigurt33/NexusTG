@@ -117,7 +117,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     source_message_id TEXT REFERENCES messages(id) ON DELETE SET NULL,
     created_at        TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
-    completed_at      TEXT
+    completed_at      TEXT,
+    reminder_stage    INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_due    ON tasks(due_at) WHERE due_at IS NOT NULL;
