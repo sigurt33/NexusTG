@@ -27,6 +27,13 @@ STATUS_BTN_LABELS = {
 PRIORITY_LABELS = {"low": "низкий", "normal": "обычный", "high": "высокий"}
 
 
+def _due_local(due: str | None) -> str:
+    """due_at из БД → значение для <input type=datetime-local> (YYYY-MM-DDTHH:MM)."""
+    if not due:
+        return ""
+    return due.strip().replace(" ", "T")[:16]
+
+
 async def _list_tasks(conn) -> list[dict]:
     cur = await conn.execute(
         """SELECT t.*, m.chat_title, m.sender_name, m.is_dm
@@ -144,6 +151,34 @@ async def tasks_set_status(request: Request, task_id: int, status: str = Form(..
     return await _render_row(request, conn, task_id)
 
 
+@router.get("/tasks/{task_id}/row")
+async def tasks_row(request: Request, task_id: int):
+    conn = request.app.state.db
+    return await _render_row(request, conn, task_id)
+
+
+@router.get("/tasks/{task_id}/edit-form")
+async def tasks_edit_form(request: Request, task_id: int):
+    conn = request.app.state.db
+    cur = await conn.execute(
+        """SELECT t.*, m.chat_title, m.sender_name, m.is_dm
+           FROM tasks t LEFT JOIN messages m ON m.id=t.source_message_id
+           WHERE t.id=?""",
+        (task_id,),
+    )
+    row = await cur.fetchone()
+    await cur.close()
+    if not row:
+        raise HTTPException(404, "Задача не найдена")
+    r = dict(row)
+    r["due_local"] = _due_local(r.get("due_at"))
+    templates = request.app.state.templates
+    return templates.TemplateResponse(
+        request, "partials/task_edit.html",
+        {"t": r, "priorities": PRIORITIES, "priority_labels": PRIORITY_LABELS},
+    )
+
+
 @router.post("/tasks/{task_id}/edit")
 async def tasks_edit(
     request: Request, task_id: int,
@@ -155,10 +190,21 @@ async def tasks_edit(
     if priority not in PRIORITIES:
         priority = "normal"
     conn = request.app.state.db
-    await conn.execute(
-        "UPDATE tasks SET title=?, priority=?, due_at=?, notes=?, updated_at=datetime('now') WHERE id=?",
-        (title.strip(), priority, (due_at.strip() or None), (notes.strip() or None), task_id),
-    )
+    new_due = due_at.strip() or None
+    cur = await conn.execute("SELECT due_at FROM tasks WHERE id=?", (task_id,))
+    old = await cur.fetchone()
+    await cur.close()
+    old_due = old["due_at"] if old else None
+    if new_due != old_due:
+        await conn.execute(
+            "UPDATE tasks SET title=?, priority=?, due_at=?, notes=?, reminder_stage=0, updated_at=datetime('now') WHERE id=?",
+            (title.strip(), priority, new_due, (notes.strip() or None), task_id),
+        )
+    else:
+        await conn.execute(
+            "UPDATE tasks SET title=?, priority=?, due_at=?, notes=?, updated_at=datetime('now') WHERE id=?",
+            (title.strip(), priority, new_due, (notes.strip() or None), task_id),
+        )
     await conn.commit()
     return await _render_row(request, conn, task_id)
 

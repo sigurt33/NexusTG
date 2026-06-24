@@ -1,0 +1,22 @@
+<article id="task-{{ t.id }}" class="task-card prio-{{ t.priority }}"
+         style="border-left:4px solid #b59f3b;background:var(--background-color,#fff);border-radius:6px;padding:.5rem .6rem;box-shadow:0 1px 2px rgba(0,0,0,.06);">
+  <form hx-post="/tasks/{{ t.id }}/edit" hx-target="#task-{{ t.id }}" hx-swap="outerHTML"
+        style="display:flex;flex-direction:column;gap:.4rem;">
+    <input name="title" value="{{ t.title }}" required title="Заголовок задачи" style="font-size:16px;">
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+      <select name="priority" title="Приоритет">
+        <option value="low"    {% if t.priority=='low' %}selected{% endif %}>⬇ низкий</option>
+        <option value="normal" {% if t.priority=='normal' %}selected{% endif %}>· обычный</option>
+        <option value="high"   {% if t.priority=='high' %}selected{% endif %}>⚡ высокий</option>
+      </select>
+      <input type="datetime-local" name="due_at" value="{{ t.due_local }}" title="Дедлайн" style="font-size:16px;">
+    </div>
+    <textarea name="notes" rows="2" placeholder="Заметки..." title="Заметки" style="font-size:16px;">{{ t.notes or '' }}</textarea>
+    <div style="display:flex;gap:.25rem;">
+      <button type="submit" title="Сохранить изменения" style="font-size:.8rem;padding:.2rem .5rem;">💾 Сохранить</button>
+      <button type="button" class="secondary" title="Отменить"
+              hx-get="/tasks/{{ t.id }}/row" hx-target="#task-{{ t.id }}" hx-swap="outerHTML"
+              style="font-size:.8rem;padding:.2rem .5rem;">Отмена</button>
+    </div>
+  </form>
+</article>

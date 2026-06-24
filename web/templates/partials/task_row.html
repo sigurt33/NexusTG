@@ -28,6 +28,10 @@
       <a href="/message/{{ t.source_message_id }}" title="Открыть карточку сообщения в дашборде"
          style="font-size:.78rem;padding:.15rem .4rem;">🌐 В дашборде</a>
     {% endif %}
+    <button type="button" title="Редактировать задачу"
+            hx-get="/tasks/{{ t.id }}/edit-form"
+            hx-target="#task-{{ t.id }}" hx-swap="outerHTML"
+            style="font-size:.78rem;padding:.15rem .4rem;">✏ Изменить</button>
     <button type="button" title="Удалить задачу безвозвратно" hx-confirm="Удалить задачу?"
             hx-post="/tasks/{{ t.id }}/delete"
             hx-target="#task-{{ t.id }}" hx-swap="delete"
