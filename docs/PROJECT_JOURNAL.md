@@ -45,6 +45,7 @@ GitHub: https://github.com/sigurt33/NexusTG
 - **`tasks`** — задачник (новая фича от 2026-06-11):
   - `id` (auto), `title`, `status` (`todo/doing/waiting/done/cancelled`), `priority` (`low/normal/high`)
   - `due_at`, `notes`, `source_message_id` (FK → messages, nullable), `created_at`, `updated_at`, `completed_at`
+  - `reminder_stage` (0/1/2) — дедуп напоминаний о дедлайне (добавлено 2026-06-24)
 - **`messages_fts`** — FTS5 индекс по тексту/чату/отправителю
 
 ---
@@ -94,6 +95,11 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-20 | **Гамбургер-меню на телефоне**: 12 вкладок сворачиваются в ☰ (чекбокс-хак, без JS). Вкладки обёрнуты в `.nav-collapse` (на десктопе `display:contents` — раскладка не меняется), на моб. — выпадающее меню по `.nav-toggle:checked`. Прежняя горизонтальная лента вкладок ломала ширину страницы (см. скрин). SW→`nexustg-v3` | `web/templates/base.html`, `web/static/app.css`, `web/static/sw.js` |
 | 2026-06-20 | **Фикс меню «Отложить» на телефоне**: `.snooze-opts` был `position:absolute` и наезжал на соседнюю карточку — кнопки не нажимались. На моб. сделал его в потоке (`position:static`, открытое меню `flex-basis:100%`), форму «Своё» в столбик, поле даты 16px на всю ширину. SW→`nexustg-v4` | `web/static/app.css`, `web/static/sw.js` |
 | 2026-06-20 | **Борьба с залипанием кэша**: правки CSS не долетали в установленный PWA (старый SW отдавал статику из кэша). Фикс: (1) версионирование URL стиля `app.css?v=…` в `base.html` — заставляет загрузить свежий CSS в обход кэша; (2) SW переписан на **network-first для всего своего origin** (`nexustg-v5`) — старый код/стили больше не показываются после деплоя. **На будущее: при правке CSS бампать `?v=` в base.html** | `web/templates/base.html`, `web/static/sw.js` |
+| 2026-06-24 | **Напоминания о дедлайнах**: цикл `_deadline_loop` в `bot/main.py` шлёт в Telegram-бот за N ч до `due_at` (stage 1) и при наступлении/просрочке (stage 2); дедуп через новую колонку `tasks.reminder_stage`; N (`task_reminder_hours_before`) читается живьём из `config.toml` (`app/settings_io.live_reminder_hours`) — смена в Настройках без перезапуска. Спека/план в `docs/superpowers/` | `bot/main.py`, `app/db.py`, `app/schema.sql`, `app/settings_io.py` |
+| 2026-06-24 | **Inline-редактирование задачи**: кнопка ✏ → форма (`partials/task_edit.html`) через HTMX-swap; новые GET `/tasks/{id}/edit-form` и `/tasks/{id}/row`; правка `due_at` сбрасывает `reminder_stage`=0 | `web/routes/tasks.py`, `web/templates/partials/task_edit.html`, `task_row.html` |
+| 2026-06-24 | **Вкладка «Настройки»** (`/settings`): редактирует безопасные поля config.toml (часы до дедлайна — живьём, активные часы / уведомления / бюджет токенов / модель — после перезапуска); flat-toml writer `app/settings_io.write_config_values` (без новой зависимости); секреты `.env` только для чтения | `web/routes/settings.py`, `web/templates/settings.html`, `app/app.py`, `base.html` |
+| 2026-06-24 | **Массовое закрытие инбокса**: ~4412 открытых сообщений старше сегодня помечены `done`, сегодняшние (~126) оставлены на обработку. Бэкап `backups/data_20260624_1530.zip` | разовый скрипт |
+| 2026-06-24 | **Аудит кнопок**: субагент сверил все HTMX-кнопки шаблонов с роутами и inline-кнопки бота с колбэком `_cb` — 0 битых. ⚠️ `/chats` тормозит/таймаутит (коррелированные подзапросы `COUNT(*)`/`MAX` по `messages` на каждый из 492 чатов) — пред-существующая проблема, кандидат на индекс `messages(chat_id)` | — |
 
 ---
 
@@ -149,11 +155,12 @@ uv run python -m bot.pin_help
 ## 8. Что НЕ реализовано (TODO)
 
 - [ ] Drag-and-drop на kanban-доске
-- [ ] Напоминания о дедлайнах (cron + push в бот за N часов до `due_at`)
+- [x] ~~Напоминания о дедлайнах (push в бот за N часов до `due_at`)~~ — сделано 2026-06-24 (`_deadline_loop`, `reminder_stage`, настраиваемые часы)
 - [ ] Подзадачи / теги
 - [ ] Bulk-операции в задачнике («закрыть все done старше недели»)
 - [ ] CSV-экспорт задач (паттерн копировать из `/export/messages.csv`)
-- [ ] UI-форма редактирования задачи (сейчас только статус и удаление через кнопки; для edit полей нужен модал)
+- [x] ~~UI-форма редактирования задачи~~ — сделано 2026-06-24 (inline HTMX-форма, не модал)
+- [ ] Производительность `/chats`: индекс `messages(chat_id)` — страница таймаутит на 492 чатах с коррелированными подзапросами
 - [ ] Lite-режим (`--lite` флаг) — см. `skills/nexustg-lite/SKILL.md`, концепт описан, реализации нет
 - [x] ~~Коммит и пуш изменений 11–12 июня в `sigurt33/NexusTG`~~ — сделано 2026-06-19 (`6235242..dead2da`)
 
