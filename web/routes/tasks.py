@@ -125,9 +125,17 @@ async def tasks_from_message(request: Request, message_id: str):
     task_id = await create_task_from_message(conn, message_id)
     if task_id is None:
         raise HTTPException(404, "Сообщение не найдено")
+    # заодно помечаем сообщение «Готово» — оно уходит из инбокса
+    await conn.execute(
+        "INSERT INTO user_actions(message_id, action) VALUES (?, 'done')", (message_id,)
+    )
+    await conn.execute(
+        "DELETE FROM pending_notifications WHERE message_id=?", (message_id,)
+    )
+    await conn.commit()
     html = (
         f'<a class="task-created" href="/tasks#task-{task_id}" '
-        f'title="Перейти к задаче в задачнике">✓ Задача #{task_id} создана</a>'
+        f'title="Перейти к задаче в задачнике">✓ Задача #{task_id} создана · убрано из инбокса</a>'
     )
     return Response(status_code=200, content=html, media_type="text/html")
 

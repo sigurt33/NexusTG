@@ -356,8 +356,10 @@ def register_handlers(bot: TelegramClient, conn, cfg) -> None:
             if task_id is None:
                 await event.answer("Сообщение не найдено", alert=True)
                 return
+            # заодно помечаем сообщение «Готово» — оно уходит из инбокса
+            await _record_action(conn, mid, "done")
             await event.edit(
-                event.message.message + f"\n📋 → Задача #{task_id} создана · {datetime.now().strftime('%H:%M')}",
+                event.message.message + f"\n📋 → Задача #{task_id} создана · убрано из инбокса · {datetime.now().strftime('%H:%M')}",
                 buttons=[[Button.url("📋 Открыть задачу", f"{WEB_BASE}/tasks#task-{task_id}")]],
             )
             await event.answer(f"Задача #{task_id} создана")
