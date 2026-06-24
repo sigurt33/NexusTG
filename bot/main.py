@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
 
 from app.config import DATA_DIR
 from app.links import telegram_deep_link
+from app.settings_io import live_reminder_hours
 from app.tasks import create_task_from_message
 
 log = logging.getLogger(__name__)
@@ -98,6 +100,35 @@ def _snooze_until(preset: str) -> str:
     return tgt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _parse_due_local(due: str, tz) -> datetime | None:
+    """due_at — наивное локальное ('YYYY-MM-DDTHH:MM' или с пробелом/сек) → aware UTC."""
+    s = (due or "").strip().replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
+        try:
+            naive = datetime.strptime(s, fmt)
+            return naive.replace(tzinfo=tz).astimezone(timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+async def _send_deadline(bot: TelegramClient, cfg, tid: int, title: str, due_str: str, overdue: bool) -> bool:
+    if not cfg.tg_my_id:
+        return False
+    head = "🔴 Дедлайн наступил/просрочен" if overdue else "⏰ Скоро дедлайн"
+    body = f"{head}\n#{tid} {title}\nСрок: {due_str}"
+    buttons = [
+        [Button.inline("✅ Готово", f"tdone:{tid}".encode())],
+        [Button.url("🌐 Открыть задачу", f"{WEB_BASE}/tasks#task-{tid}")],
+    ]
+    try:
+        await bot.send_message(cfg.tg_my_id, body, buttons=buttons, link_preview=False)
+        return True
+    except Exception as e:
+        log.warning("deadline send failed: %s", e)
+        return False
+
+
 async def send_inbox_notification(bot: TelegramClient, conn, cfg, message_id: str) -> bool:
     if not cfg.tg_my_id:
         return False
@@ -141,6 +172,38 @@ async def _watcher_loop(bot: TelegramClient, conn, cfg) -> None:
                 seen.clear()
         except Exception as e:
             log.warning("bot watcher: %s", e)
+        await asyncio.sleep(POLL_INTERVAL)
+
+
+async def _deadline_loop(bot: TelegramClient, conn, cfg) -> None:
+    """Напоминания о дедлайнах задач: за N ч (stage 1) и при наступлении/просрочке (stage 2)."""
+    tz = ZoneInfo(cfg.timezone)
+    while True:
+        try:
+            hours = live_reminder_hours(cfg.task_reminder_hours_before)
+            now = datetime.now(timezone.utc)
+            cur = await conn.execute(
+                """SELECT id, title, due_at, reminder_stage FROM tasks
+                   WHERE status IN ('todo','doing','waiting')
+                     AND due_at IS NOT NULL AND reminder_stage < 2"""
+            )
+            rows = await cur.fetchall()
+            await cur.close()
+            for r in rows:
+                due = _parse_due_local(r["due_at"], tz)
+                if due is None:
+                    continue
+                tid, title, stage = r["id"], r["title"], r["reminder_stage"]
+                if now >= due and stage < 2:
+                    if await _send_deadline(bot, cfg, tid, title, r["due_at"], overdue=True):
+                        await conn.execute("UPDATE tasks SET reminder_stage=2 WHERE id=?", (tid,))
+                        await conn.commit()
+                elif stage == 0 and (due - timedelta(hours=hours)) <= now < due:
+                    if await _send_deadline(bot, cfg, tid, title, r["due_at"], overdue=False):
+                        await conn.execute("UPDATE tasks SET reminder_stage=1 WHERE id=?", (tid,))
+                        await conn.commit()
+        except Exception as e:
+            log.warning("deadline loop: %s", e)
         await asyncio.sleep(POLL_INTERVAL)
 
 
@@ -331,6 +394,7 @@ async def run_bot(conn, cfg) -> None:
     log.info("TG-бот запущен.")
     register_handlers(bot, conn, cfg)
     watcher = asyncio.create_task(_watcher_loop(bot, conn, cfg), name="bot_watcher")
+    deadline = asyncio.create_task(_deadline_loop(bot, conn, cfg), name="bot_deadline")
     try:
         await bot.run_until_disconnected()
     except asyncio.CancelledError:
@@ -339,6 +403,11 @@ async def run_bot(conn, cfg) -> None:
         watcher.cancel()
         try:
             await watcher
+        except (asyncio.CancelledError, Exception):
+            pass
+        deadline.cancel()
+        try:
+            await deadline
         except (asyncio.CancelledError, Exception):
             pass
         await bot.disconnect()
