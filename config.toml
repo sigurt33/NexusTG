@@ -13,3 +13,4 @@ llm_input_usd_per_m = 0.075
 llm_output_usd_per_m = 0.3
 notify_tg_bot = true
 task_reminder_hours_before = 3
+voice_transcribe_max_minutes = 3

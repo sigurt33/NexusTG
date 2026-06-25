@@ -38,6 +38,7 @@ class Config:
     tg_my_id: int
     notify_tg_bot: bool
     task_reminder_hours_before: int
+    voice_transcribe_max_minutes: int
 
 
 def load_config() -> Config:
@@ -85,4 +86,5 @@ def load_config() -> Config:
         tg_my_id=my_id,
         notify_tg_bot=bool(toml_cfg.get("notify_tg_bot", False)),
         task_reminder_hours_before=int(toml_cfg.get("task_reminder_hours_before", 3)),
+        voice_transcribe_max_minutes=int(toml_cfg.get("voice_transcribe_max_minutes", 3)),
     )
