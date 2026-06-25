@@ -31,6 +31,33 @@ def _serialize(obj: Any) -> str:
         return "{}"
 
 
+def _media_info(message: Any) -> tuple[str | None, int | None]:
+    """Определить тип медиа и длительность (сек). Порядок важен: voice — это тоже document."""
+    kind = None
+    if getattr(message, "voice", None):
+        kind = "voice"
+    elif getattr(message, "video_note", None):
+        kind = "video_note"
+    elif getattr(message, "audio", None):
+        kind = "audio"
+    elif getattr(message, "sticker", None):
+        kind = "sticker"
+    elif getattr(message, "gif", None):
+        kind = "gif"
+    elif getattr(message, "photo", None):
+        kind = "photo"
+    elif getattr(message, "video", None):
+        kind = "video"
+    elif getattr(message, "document", None):
+        kind = "document"
+    duration = None
+    if kind in ("voice", "video_note", "audio", "video"):
+        f = getattr(message, "file", None)
+        if f is not None and getattr(f, "duration", None):
+            duration = int(f.duration)
+    return kind, duration
+
+
 class State:
     """Состояние сервиса: я, мой username, кеш entity, чат-broadcast флаги."""
 
@@ -152,23 +179,28 @@ async def _capture_message(
     if getattr(message, "reply_to_msg_id", None):
         reply_to_id = msg_id(chat_id, message.reply_to_msg_id)
 
+    media_kind, media_duration = _media_info(message)
+    media_status = "pending" if media_kind else None
     await conn.execute(
         """
         INSERT INTO messages
         (id, chat_id, chat_title, sender_id, sender_name, text, date_utc, reply_to_id,
-         is_dm, is_mention, is_reply_to_me, is_context_only, raw_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+         is_dm, is_mention, is_reply_to_me, is_context_only, raw_json,
+         media_kind, media_status, media_duration)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             text=excluded.text,
             is_dm=excluded.is_dm,
             is_mention=excluded.is_mention,
             is_reply_to_me=excluded.is_reply_to_me,
             is_context_only=0,
-            raw_json=excluded.raw_json
+            raw_json=excluded.raw_json,
+            media_kind=excluded.media_kind,
+            media_duration=excluded.media_duration
         """,
         (mid, chat_id, chat_title, sender_id, sender_name, message.message or "",
          date_utc, reply_to_id, int(is_dm), int(is_mention), int(is_reply_to_me),
-         _serialize(message)),
+         _serialize(message), media_kind, media_status, media_duration),
     )
     await conn.execute(
         """
