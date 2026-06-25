@@ -155,6 +155,7 @@ async def _pending_messages(conn: aiosqlite.Connection, limit: int) -> list[dict
           AND m.deleted_at IS NULL
           AND COALESCE(c.archived, 0) = 0
           AND COALESCE(c.processing, 1) = 1
+          AND COALESCE(m.media_status, '') <> 'pending'
           AND m.id NOT IN (SELECT message_id FROM priorities)
         ORDER BY m.date_utc DESC
         LIMIT ?
