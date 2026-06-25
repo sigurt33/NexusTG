@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS messages (
     edited_at       TEXT,
     deleted_at      TEXT,
     raw_json        TEXT,
-    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    media_kind     TEXT,
+    media_status   TEXT,
+    media_duration INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_messages_date         ON messages(date_utc DESC);

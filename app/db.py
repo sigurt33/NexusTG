@@ -108,6 +108,17 @@ async def ensure_columns(conn: aiosqlite.Connection) -> None:
         )
         """
     )
+    # messages media columns
+    mcols = await _table_columns(conn, "messages")
+    if "media_kind" not in mcols:
+        await conn.execute("ALTER TABLE messages ADD COLUMN media_kind TEXT")
+    if "media_status" not in mcols:
+        await conn.execute("ALTER TABLE messages ADD COLUMN media_status TEXT")
+    if "media_duration" not in mcols:
+        await conn.execute("ALTER TABLE messages ADD COLUMN media_duration INTEGER")
+    await conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_media_pending ON messages(media_status) WHERE media_status='pending'"
+    )
     await conn.commit()
 
 
