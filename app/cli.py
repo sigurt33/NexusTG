@@ -96,6 +96,7 @@ async def cmd_run() -> int:
     from ingestion.chats_sync import sync_chats, archived_chat_ids
     from classifier.grok_worker import run_worker
     from classifier.consolidator import nightly_consolidate
+    from ingestion.media import run_media_worker
     from notifications.scheduler import run_notifications
     from notifications.outbox_sender import run_outbox_sender
 
@@ -147,6 +148,10 @@ async def cmd_run() -> int:
         run_worker(conn, cfg),
         name="classifier",
     )
+    media_task = asyncio.create_task(
+        run_media_worker(client, conn, cfg),
+        name="media",
+    )
     notify_task = asyncio.create_task(
         run_notifications(client, conn, cfg),
         name="notifications",
@@ -166,7 +171,7 @@ async def cmd_run() -> int:
     except KeyboardInterrupt:
         print("Остановка по Ctrl+C...")
     finally:
-        tasks_to_cancel = [backfill_task, classifier_task, notify_task, outbox_task]
+        tasks_to_cancel = [backfill_task, classifier_task, media_task, notify_task, outbox_task]
         if bot_task is not None:
             tasks_to_cancel.append(bot_task)
         for t in tasks_to_cancel:
