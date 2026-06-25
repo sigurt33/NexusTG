@@ -29,7 +29,7 @@ GitHub: https://github.com/sigurt33/NexusTG
 
 Основные таблицы (см. `app/schema.sql` + аддитивные миграции в `app/db.py:ensure_columns`):
 
-- **`messages`** — pk `id` = `"{chat_id}:{msg_id}"`, поля `chat_id`, `chat_title`, `sender_*`, `text`, `date_utc`, `is_dm`/`is_mention`/`is_reply_to_me`/`is_context_only`, `raw_json`, `edited_at`, `deleted_at`
+- **`messages`** — pk `id` = `"{chat_id}:{msg_id}"`, поля `chat_id`, `chat_title`, `sender_*`, `text`, `date_utc`, `is_dm`/`is_mention`/`is_reply_to_me`/`is_context_only`, `raw_json`, `edited_at`, `deleted_at`, `media_kind`/`media_status`/`media_duration` (медиа-обработка, 2026-06-25)
 - **`context_links`** — ±5 соседних сообщений вокруг target'а
 - **`topics`** — иерархия тем (с `parent_id`), `hidden`, `message_count`
 - **`message_topics`** — many-to-many
@@ -102,6 +102,7 @@ CLI: `uv run python -m app.cli {login|run|web|bot|backup}`
 | 2026-06-24 | **Аудит кнопок**: субагент сверил все HTMX-кнопки шаблонов с роутами и inline-кнопки бота с колбэком `_cb` — 0 битых. ⚠️ `/chats` тормозит/таймаутит (коррелированные подзапросы `COUNT(*)`/`MAX` по `messages` на каждый из 492 чатов) — пред-существующая проблема, кандидат на индекс `messages(chat_id)` | — |
 | 2026-06-24 | **Влито в `main` и запушено** в `sigurt33/NexusTG` (`e1aa8bd..3ac4534`, fast-forward): напоминания о дедлайнах, inline-редактирование задач, вкладка «Настройки», массовое закрытие инбокса, аудит кнопок. README синхронизирован (фичи, конфиг, таблица роутов, бот, статус) | `git push origin main` |
 | 2026-06-25 | **«В задачник» теперь убирает из инбокса**: и веб-кнопка (`POST /tasks/from-message`), и бот-колбэк `task:` после создания задачи пишут `user_actions(action='done')` для сообщения — оно пропадает из инбокса и уведомлений. Живой тест: задача создаётся, сообщение уходит из инбокса; артефакты теста откачены | `web/routes/tasks.py`, `bot/main.py` |
+| 2026-06-25 | **Транскрипция голосовых + обработка медиа**: новый воркер `ingestion/media.py: run_media_worker` (в `cmd_run`, у него есть Telethon-клиент). Короткие голосовые (≤`voice_transcribe_max_minutes`, дефолт 3) скачиваются и транскрибируются Gemini через `input_audio` (ogg напрямую работает; фоллбэк — нативный `generateContent`) → текст `🎤 Транскрипция…` → классификатор как обычный текст. Длинные голосовые / фото / видео / документы — метка + score 5; стикеры/GIF — тривиал; медиа с подписью — по подписи. Колонки `media_kind/status/duration`; листенер метит `pending`, классификатор пропускает `pending`. **E2E проверено** на реальном голосовом: транскрипция → score 4.4 + темы | `ingestion/media.py`, `ingestion/telegram_listener.py`, `classifier/grok_worker.py`, `app/cli.py`, `app/db.py`, `app/schema.sql`, `app/config.py` |
 
 ---
 
@@ -180,6 +181,8 @@ uv run python -m bot.pin_help
 - **Параллельная Telethon-сессия бота** — `bot.start(bot_token=...)` поверх уже работающего бота не ломается (bot API толерантен), но писать в один и тот же session-файл одновременно из двух процессов не стоит. `bot/pin_help.py` использует тот же `tg_bot.session` — запускать только когда основной run остановлен, либо после, либо вместе (telegram bot API толерантен, но во избежание гонок — последовательно).
 - **Tailscale ↔ Surfshark (и любой WireGuard-VPN) конфликтуют.** Surfshark подменяет DNS доменов `*.tailscale.com` на фейковые `192.200.0.x` → Tailscale не входит (`forbidden by access permissions` в логах). Симптом: кнопка «Log in» молчит. Фикс на ПК: Surfshark **Bypasser** — исключить `C:\Program Files\Tailscale\tailscaled.exe` из VPN (в WireGuard-режиме Bypasser может быть недоступен → переключить Surfshark на OpenVPN). Проверка входа: `& "C:\Program Files\Tailscale\tailscale.exe" status` (должен быть `BackendState: Running` + IP `100.x`). На **телефоне** Bypasser не спасёт — мобильная ОС разрешает только один VPN сразу, Tailscale и Surfshark взаимоисключающи.
 - **`tailscale serve` нельзя проверить с той же машины** — TCP на собственный tailnet-IP:443 не разворачивается через TUN (Windows). Тестировать только с другого устройства (телефон).
+- **Транскрипция голосовых: свои сообщения не захватываются** (`sender_id==me_id` пропускается), поэтому отправить себе тестовое голосовое нельзя. Для E2E-теста: пометить уже захваченное чужое голосовое `media_status='pending'` (+ `media_kind='voice'`, duration) — живой `run_media_worker` сам скачает и расшифрует. Gemini принимает **OGG/Opus напрямую** через OpenAI-совместимый `input_audio` (`format:"ogg"`), нативный `generateContent`-фоллбэк не понадобился.
+- **Логи `run` идут в stdout** (`_setup_logging` → `stream=sys.stdout`); файл `data/run.log` наполняется только если лаунчер редиректит. При перезапуске из скрипта — `Start-Process ... -RedirectStandardOutput data\run.log -RedirectStandardError data\run.err.log`, старый `run.log` архивировать в `data/logs/run_old_<ts>.log`.
 
 ---
 
